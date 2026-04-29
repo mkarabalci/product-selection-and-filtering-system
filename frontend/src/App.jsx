@@ -5,6 +5,8 @@ import Beverages from "./Beverages"
 import SupplierLogin from "./SupplierLogin"
 import SupplierRegister from "./SupplierRegister"
 import SupplierDashboard from "./SupplierDashboard"
+import CustomerLogin from "./CustomerLogin"
+import CustomerRegister from "./CustomerRegister"
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/supplier/login" element={<SupplierLogin />} />
         <Route path="/supplier/register" element={<SupplierRegister />} />
         <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+        <Route path="/customer/login" element={<CustomerLogin />} />
+        <Route path="/customer/register" element={<CustomerRegister />} />
       </Routes>
     </BrowserRouter>
   )

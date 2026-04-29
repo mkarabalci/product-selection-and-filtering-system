@@ -5,6 +5,9 @@ import Sidebar from "./Sidebar"
 function Home() {
   const navigate = useNavigate()
 
+  // localStorage'dan kullanıcı bilgilerini al
+  const customer = JSON.parse(localStorage.getItem("customer"))
+
   return (
   <div className="home-page">
     
@@ -12,7 +15,7 @@ function Home() {
 <Sidebar />
 
     <main className="home-main">
-      <h2>Welcome! 👋</h2>
+      <h2>Welcome, {customer?.username}! 👋</h2>
       <h3>Explore categories</h3>
 <div className="categories-grid">
 

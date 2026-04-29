@@ -9,7 +9,7 @@ app = FastAPI()
 # React frontend'in API'a erişebilmesi için CORS ayarı
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -603,3 +603,77 @@ def get_supplier_products(supplier_id: int):
         cursor.close()
         conn.close()
     return [{"name": row[0], "category": row[1], "price": float(row[2]), "stock": row[3], "branch": row[4]} for row in rows]
+
+# ── Kullanıcı Login ve Register ──────────────────────────────────────────────
+
+class CustomerLogin(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class CustomerRegister(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    password: str
+
+@app.post("/customer/login")
+def customer_login(data: CustomerLogin):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, username, password FROM customers WHERE email = %s",
+            (data.email,)
+        )
+        customer = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not customer:
+        raise HTTPException(status_code=401, detail="Email bulunamadı")
+    
+    if customer[1] != data.username:
+        raise HTTPException(status_code=401, detail="Ad soyad yanlış")
+
+    if customer[2] != data.password:
+        raise HTTPException(status_code=401, detail="Şifre yanlış")
+
+    return {
+        "message": "Giriş başarılı",
+        "customer_id": customer[0],
+        "username": customer[1]
+    }
+
+@app.post("/customer/register")
+def customer_register(data: CustomerRegister):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id FROM customers WHERE email = %s",
+            (data.email,)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
+        
+        # Ad ve soyadı birleştirerek username olarak kaydet
+        username = f"{data.first_name} {data.last_name}"
+        cursor.execute(
+            "INSERT INTO customers (username, email, password) VALUES (%s, %s, %s) RETURNING id",
+            (username, data.email, data.password)
+        )
+        new_id = cursor.fetchone()[0]
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "message": "Kayıt başarılı",
+        "customer_id": new_id,
+        "username": username
+    }

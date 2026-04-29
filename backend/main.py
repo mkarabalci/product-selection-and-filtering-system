@@ -446,3 +446,160 @@ def get_beverage_package_types():
         cursor.close()
         conn.close()
     return [row[0] for row in rows]
+
+@app.get("/beverage-brands")
+def get_beverage_brands():
+    # Sadece içecek ürünlerinde kullanılan markaları getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT b.name 
+            FROM brands b
+            JOIN products p ON p.brand_id = b.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE c.name = 'Beverages'
+            ORDER BY b.name
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+@app.get("/snack-brands")
+def get_snack_brands():
+    # Sadece snack ürünlerinde kullanılan markaları getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT b.name 
+            FROM brands b
+            JOIN products p ON p.brand_id = b.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE c.name = 'Snacks'
+            ORDER BY b.name
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+# ── Tedarikçi Login ──────────────────────────────────────────────────────────
+
+from fastapi import HTTPException
+from pydantic import BaseModel
+
+# Login için gelen veri modeli
+class SupplierLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/supplier/login")
+def supplier_login(data: SupplierLogin):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Email ile tedarikçiyi bul
+        cursor.execute(
+            "SELECT id, company_name, password FROM suppliers WHERE email = %s",
+            (data.email,)
+        )
+        supplier = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Tedarikçi bulunamadıysa hata ver
+    if not supplier:
+        raise HTTPException(status_code=401, detail="Email bulunamadı")
+
+    # Şifre yanlışsa hata ver
+    if supplier[2] != data.password:
+        raise HTTPException(status_code=401, detail="Şifre yanlış")
+
+    # Başarılı girişte tedarikçi bilgilerini döndür
+    return {
+        "message": "Giriş başarılı",
+        "supplier_id": supplier[0],
+        "company_name": supplier[1]
+    }
+
+# Kayıt için gelen veri modeli
+class SupplierRegister(BaseModel):
+    company_name: str
+    email: str
+    password: str
+
+@app.post("/supplier/register")
+def supplier_register(data: SupplierRegister):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Email daha önce kayıtlı mı kontrol et
+        cursor.execute(
+            "SELECT id FROM suppliers WHERE email = %s",
+            (data.email,)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
+
+        # Yeni tedarikçiyi ekle
+        cursor.execute(
+            "INSERT INTO suppliers (company_name, email, password) VALUES (%s, %s, %s) RETURNING id",
+            (data.company_name, data.email, data.password)
+        )
+        new_id = cursor.fetchone()[0]
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "message": "Kayıt başarılı",
+        "supplier_id": new_id,
+        "company_name": data.company_name
+    }
+
+@app.get("/supplier/{supplier_id}/branches")
+def get_supplier_branches(supplier_id: int):
+    # Tedarikçinin şubelerini getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, name, address FROM branches WHERE supplier_id = %s",
+            (supplier_id,)
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [{"id": row[0], "name": row[1], "address": row[2]} for row in rows]
+
+@app.get("/supplier/{supplier_id}/products")
+def get_supplier_products(supplier_id: int):
+    # Tedarikçinin tüm şubelerindeki ürünleri getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                p.name, c.name AS category, bp.price, bp.stock_quantity, br.name AS branch
+            FROM branch_products bp
+            JOIN products p ON bp.product_id = p.id
+            JOIN branches br ON bp.branch_id = br.id
+            JOIN suppliers s ON br.supplier_id = s.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE s.id = %s
+            ORDER BY p.name, br.name
+        """, (supplier_id,))
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [{"name": row[0], "category": row[1], "price": float(row[2]), "stock": row[3], "branch": row[4]} for row in rows]

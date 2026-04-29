@@ -35,7 +35,7 @@ function Beverages() {
     fetch(`${API}/beverage-types`).then(r => r.json()).then(setBeverageTypes)
     fetch(`${API}/beverage-allergens`).then(r => r.json()).then(setAllergens)
     fetch(`${API}/beverage-package-types`).then(r => r.json()).then(setPackageTypes)
-    fetch(`${API}/brands`).then(r => r.json()).then(setBrands)
+    fetch(`${API}/beverage-brands`).then(r => r.json()).then(setBrands)
     fetch(`${API}/suppliers`).then(r => r.json()).then(setSuppliers)
   }, [])
 

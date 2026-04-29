@@ -33,7 +33,7 @@ function Snacks() {
 
   // API'dan filtre seçeneklerini çek
   useEffect(() => {
-    fetch(`${API}/brands`).then(r => r.json()).then(setBrands)
+    fetch(`${API}/snack-brands`).then(r => r.json()).then(setBrands)
     fetch(`${API}/suppliers`).then(r => r.json()).then(setSuppliers)
     fetch(`${API}/snack-types`).then(r => r.json()).then(setSnackTypes)
     fetch(`${API}/allergens`).then(r => r.json()).then(setAllergens)

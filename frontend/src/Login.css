@@ -1,0 +1,117 @@
+/* Login sayfası ana container */
+.login-page {
+  min-height: 100vh;
+  background-color: #5b9bd5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* SELECTRA logosu */
+.login-logo {
+  color: white;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 32px;
+}
+
+/* Login kutusu */
+.login-box {
+  background: #e8e8e8;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Login/SignUp sekme butonları */
+.login-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.login-tabs button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: white;
+  color: #333;
+}
+
+/* Aktif sekme */
+.tab-active {
+  background: #1a3a6b !important;
+  color: white !important;
+}
+
+/* Form alanları */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-form label {
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+}
+
+.login-form input {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  margin-bottom: 8px;
+}
+
+/* Hata mesajı */
+.login-error {
+  color: red;
+  font-size: 13px;
+}
+
+/* Login butonu */
+.login-btn {
+  background: #1a3a6b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+/* Sign up linki */
+.login-signup-link {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+}
+
+.login-signup-link span {
+  color: #1a3a6b;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Footer */
+.login-footer {
+  margin-top: 32px;
+  text-align: center;
+  color: white;
+  font-style: italic;
+  font-size: 14px;
+}

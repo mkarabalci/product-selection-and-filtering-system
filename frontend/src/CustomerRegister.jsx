@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Login.css"
 
@@ -36,6 +36,11 @@ function CustomerRegister() {
       setError(data.detail)
     }
   }
+
+  // Sayfa başlığını ayarla
+useEffect(() => {
+  document.title = "Selectra - Customer Register"
+}, [])
 
   return (
     <div className="login-page">

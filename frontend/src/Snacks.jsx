@@ -100,6 +100,11 @@ function Snacks() {
     setFilters({ ...filters, [field]: updated })
   }
 
+  // Sayfa başlığını ayarla
+useEffect(() => {
+  document.title = "Selectra - Snacks"
+}, [])
+
   //  Render
   return (
     <div className="home-page">

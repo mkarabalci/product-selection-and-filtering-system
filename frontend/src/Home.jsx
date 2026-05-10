@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Home.css"
 import Sidebar from "./Sidebar"
@@ -7,6 +8,11 @@ function Home() {
 
   // localStorage'dan kullanıcı bilgilerini al
   const customer = JSON.parse(localStorage.getItem("customer"))
+
+  // Sayfa başlığını ayarla
+useEffect(() => {
+  document.title = "Selectra - HomePage"
+}, [])
 
   return (
   <div className="home-page">

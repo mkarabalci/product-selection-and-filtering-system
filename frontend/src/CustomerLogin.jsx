@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Login.css"
 
@@ -31,6 +31,11 @@ function CustomerLogin() {
       setError("Email veya şifre yanlış")
     }
   }
+
+  // Sayfa başlığını ayarla
+useEffect(() => {
+  document.title = "Selectra - Customer Login"
+}, [])
 
   return (
     <div className="login-page">

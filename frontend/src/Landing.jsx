@@ -1,8 +1,14 @@
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Landing.css"
 
 function Landing() {
   const navigate = useNavigate()
+
+  // Sayfa başlığını ayarla
+useEffect(() => {
+  document.title = "Selectra"
+}, [])
 
   return (
     <div className="landing-page">

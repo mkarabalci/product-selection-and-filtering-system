@@ -6,6 +6,7 @@ CREATE TABLE customers (
     password VARCHAR(255) NOT NULL
 );
 
+
 -- Tedarikçiler (Marketler)
 CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
@@ -330,5 +331,191 @@ UPDATE products SET image_url = 'https://images.migrosone.com/sanalmarket/produc
 UPDATE products SET image_url = 'https://cdn.dsmcdn.com/ty1659/prod/QC/20250408/15/1a25c5e4-3c49-366a-8c58-240701b59ed2/1_org_zoom.jpg' WHERE name = 'Lays Klasik';
 UPDATE products SET image_url = 'https://images.migrosone.com/sanalmarket/product/05080147/05080147_1-bd8bce-1650x1650.jpg' WHERE name = 'Lays Baharatlı';
 
+-- İçecek kategorisini ekle
+INSERT INTO categories (name) VALUES ('Beverages');
+
+-- İçeceklere özel detay tablosu
+CREATE TABLE beverages_details (
+    product_id          INT PRIMARY KEY REFERENCES products(id),
+    beverage_type       VARCHAR(50),
+    energy_kcal         INT,
+    pH                  DECIMAL(3,1),
+    sugar_g             DECIMAL(5,2),
+    volume              DECIMAL(5,2),
+    packaging           INT,
+    package_type        TEXT[],
+    allergens           TEXT[],
+    is_locally_produced BOOLEAN DEFAULT FALSE
+);
 
 
+--içecekler marka ekle
+INSERT INTO brands (name) VALUES 
+('Beypazarı'), 
+('Kızılay'), 
+('Sırma'), 
+('Sprite'), 
+('Dimes'), 
+('Tamek'), 
+('Sütaş'), 
+('Coca-Cola'), 
+('Erikli'), 
+('Red Bull'), 
+('Pepsi'), 
+('Fanta'),
+('İçim')
+
+SELECT id, name FROM categories;
+
+SELECT id, name FROM products;
+
+SELECT column_name FROM information_schema.columns WHERE table_name = 'beverage_details';
+
+SELECT * FROM beverages_details
+
+--Beypazarı limonlu maden suyu ekle
+INSERT INTO products (name, category_id, brand_id) VALUES ('Beypazarı Limonlu Maden Suyu', 2, 7);
+
+INSERT INTO beverages_details (product_id, beverage_type, energy_kcal, pH, sugar_g, volume, packaging, package_type, allergens, is_locally_produced)
+VALUES (
+    8,
+    'Mineral Water',
+    32,
+    '6.50',
+    '8.00',
+    '0.20',
+    1,
+	ARRAY['Glass'],
+	ARRAY['Halal'],
+    TRUE 
+);
+
+
+--Beypazarı Çilekli maden suyu ekle
+INSERT INTO products (name, category_id, brand_id) VALUES ('Beypazarı Çilekli Maden Suyu', 2, 7);
+
+INSERT INTO beverages_details (product_id, beverage_type, energy_kcal, pH, sugar_g, volume, packaging, package_type, allergens, is_locally_produced)
+VALUES (
+    9,
+    'Mineral Water',
+    24,
+    '6.50',
+    '6.00',
+    '0.20',
+    1,
+	ARRAY['Glass'],
+	ARRAY['Halal'],
+    TRUE 
+);
+
+--Coca cola ekle
+INSERT INTO products (name, category_id, brand_id) VALUES ('Coca-Cola', 2, 14);
+INSERT INTO beverages_details (product_id, beverage_type, energy_kcal, pH, sugar_g, volume, packaging, package_type, allergens, is_locally_produced)
+VALUES (
+    10,
+    'Soda',
+    180,
+    '2.50',
+    '10.60',
+    '0.25',
+    1,
+	ARRAY['Can'],
+	ARRAY['Halal','Caffeine'],
+    TRUE 
+);
+
+
+--Sprite ekle
+INSERT INTO products (name, category_id, brand_id) VALUES ('Sprite', 2, 10);
+INSERT INTO beverages_details (product_id, beverage_type, energy_kcal, pH, sugar_g, volume, packaging, package_type, allergens, is_locally_produced)
+VALUES (
+    11,
+    'Soda',
+    13,
+    '3.40',
+    '3.10',
+    '0.33',
+    1,
+	ARRAY['Can'],
+	ARRAY['Halal'],
+    TRUE 
+);
+
+--Fanta ekle
+INSERT INTO products (name, category_id, brand_id) VALUES ('Fanta', 2, 18);
+INSERT INTO beverages_details (product_id, beverage_type, energy_kcal, pH, sugar_g, volume, packaging, package_type, allergens, is_locally_produced)
+VALUES (
+    12,
+    'Soda',
+    13,
+    '3.40',
+    '3.10',
+    '0.33',
+    1,
+	ARRAY['Can'],
+	ARRAY['Halal'],
+    TRUE 
+);
+
+SELECT id, name FROM brands;
+
+SELECT p.id, p.name, bd.beverage_type, bd.energy_kcal, bd.sugar_g
+FROM products p
+JOIN beverages_details bd ON p.id = bd.product_id
+ORDER BY p.id;
+
+-- Beypazarı Limonlu (id=8)
+INSERT INTO branch_products (branch_id, product_id, price, stock_quantity) VALUES
+(1, 8, 15.00, 50),  -- Migros Kadıköy
+(2, 8, 15.00, 0),  -- Migros Beşiktaş
+(3, 8, 13.00, 30),  -- A101 Üsküdar
+(4, 8, 13.00, 10),  -- A101 Şişli
+(5, 8, 12.00, 60),  -- BIM Ataşehir
+(6, 8, 12.00, 20),  -- BIM Bakırköy
+(7, 8, 14.00, 25),  -- SOK Beyoğlu
+(8, 8, 14.00, 0),  -- SOK Maltepe
+
+-- Beypazarı Çilekli (id=9)
+(1, 9, 15.00, 40),
+(2, 9, 15.00, 35),
+(3, 9, 13.00, 0),
+(4, 9, 13.00, 30),
+(5, 9, 12.00, 0),
+(6, 9, 12.00, 40),
+(7, 9, 14.00, 10),
+(8, 9, 14.00, 100),
+
+-- Coca-Cola (id=10)
+(1, 10, 48.00, 0),
+(2, 10, 48.00, 55),
+(3, 10, 52.00, 70),
+(4, 10, 52.00, 25),
+(5, 10, 50.00, 40),
+(6, 10, 50.00, 0),
+(7, 10, 54.00, 30),
+(8, 10, 54.00, 70),
+
+-- Sprite (id=11)
+(1, 11, 48.00, 0),
+(2, 11, 48.00, 35),
+(3, 11, 50.00, 50),
+(4, 11, 50.00, 0),
+(5, 11, 52.00, 60),
+(6, 11, 52.00, 55),
+(7, 11, 54.00, 30),
+(8, 11, 54.00, 35),
+
+-- Fanta (id=12)
+(1, 12, 50.00, 40),
+(2, 12, 50.00, 35),
+(3, 12, 48.00, 50),
+(4, 12, 48.00, 0),
+(5, 12, 49.00, 50),
+(6, 12, 49.00, 40),
+(7, 12, 52.00, 90),
+(8, 12, 52.00, 0);
+
+SELECT * FROM branch_products
+
+SELECT * FROM suppliers;
+SELECT * FROM customers;

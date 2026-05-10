@@ -584,25 +584,39 @@ def get_supplier_branches(supplier_id: int):
 @app.get("/supplier/{supplier_id}/products")
 def get_supplier_products(supplier_id: int):
     # Tedarikçinin tüm şubelerindeki ürünleri getirir
+    # bp.id, branch_id ve product_id eklendi — frontend'in düzenleme/silme yapabilmesi için
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("""
             SELECT 
-                p.name, c.name AS category, bp.price, bp.stock_quantity, br.name AS branch
+                bp.id, bp.branch_id, bp.product_id,
+                p.name, c.name AS category, 
+                bp.price, bp.stock_quantity, br.name AS branch,
+                br.name AS branch, br.address AS branch_address
             FROM branch_products bp
             JOIN products p ON bp.product_id = p.id
             JOIN branches br ON bp.branch_id = br.id
             JOIN suppliers s ON br.supplier_id = s.id
             JOIN categories c ON p.category_id = c.id
             WHERE s.id = %s
-            ORDER BY p.name, br.name
+            ORDER BY br.name, p.name
         """, (supplier_id,))
         rows = cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
-    return [{"name": row[0], "category": row[1], "price": float(row[2]), "stock": row[3], "branch": row[4]} for row in rows]
+    return [{
+        "id": row[0],
+        "branch_id": row[1],
+        "product_id": row[2],
+        "name": row[3],
+        "category": row[4],
+        "price": float(row[5]),
+        "stock": row[6],
+        "branch": row[7],
+        "branch_address": row[8]
+    } for row in rows]
 
 # ── Kullanıcı Login ve Register ──────────────────────────────────────────────
 
@@ -676,4 +690,194 @@ def customer_register(data: CustomerRegister):
         "message": "Kayıt başarılı",
         "customer_id": new_id,
         "username": username
+    }
+# ── Tedarikçi Ürün Düzenleme ve Silme ────────────────────────────────────────
+
+# Ürün güncelleme için veri modeli
+class BranchProductUpdate(BaseModel):
+    price: float
+    stock_quantity: int
+
+@app.put("/supplier/{supplier_id}/products/{branch_product_id}")
+def update_supplier_product(
+    supplier_id: int,
+    branch_product_id: int,
+    data: BranchProductUpdate
+):
+    # Tedarikçinin kendi şubesindeki bir ürünün fiyat ve stoğunu günceller
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Güvenlik kontrolü: bu branch_product gerçekten bu supplier'a mı ait?
+        cursor.execute("""
+            SELECT bp.id
+            FROM branch_products bp
+            JOIN branches br ON bp.branch_id = br.id
+            WHERE bp.id = %s AND br.supplier_id = %s
+        """, (branch_product_id, supplier_id))
+        
+        result = cursor.fetchone()
+        if not result:
+            raise HTTPException(
+                status_code=403,
+                detail="Bu ürünü düzenleme yetkiniz yok"
+            )
+
+        # Fiyat ve stok güncelle
+        cursor.execute("""
+            UPDATE branch_products
+            SET price = %s, stock_quantity = %s
+            WHERE id = %s
+        """, (data.price, data.stock_quantity, branch_product_id))
+        
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "message": "Ürün güncellendi",
+        "id": branch_product_id,
+        "price": data.price,
+        "stock_quantity": data.stock_quantity
+    }
+
+
+@app.delete("/supplier/{supplier_id}/products/{branch_product_id}")
+def delete_supplier_product(supplier_id: int, branch_product_id: int):
+    # Tedarikçinin kendi şubesinden bir ürünü kaldırır
+    # Not: Ürün tüm sistemden silinmez, sadece bu şubeden kaldırılır
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Güvenlik kontrolü: bu branch_product gerçekten bu supplier'a mı ait?
+        cursor.execute("""
+            SELECT bp.id
+            FROM branch_products bp
+            JOIN branches br ON bp.branch_id = br.id
+            WHERE bp.id = %s AND br.supplier_id = %s
+        """, (branch_product_id, supplier_id))
+        
+        result = cursor.fetchone()
+        if not result:
+            raise HTTPException(
+                status_code=403,
+                detail="Bu ürünü silme yetkiniz yok"
+            )
+
+        # Sil
+        cursor.execute(
+            "DELETE FROM branch_products WHERE id = %s",
+            (branch_product_id,)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "message": "Ürün şubeden kaldırıldı",
+        "id": branch_product_id
+    }
+
+# ── Ürün Arama (Yeni Ürün Ekleme Formu İçin) ─────────────────────────────────
+
+@app.get("/products/search")
+def search_products(q: str = ""):
+    # Ürün adına göre arama yapar — Add New Product formunda kullanılır
+    # Tedarikçi ürün adını yazdıkça eşleşenleri döndürür
+    # Boş sorgu gelirse tüm ürünleri (max 50) döndürür
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT p.id, p.name, c.name AS category, b.name AS brand
+            FROM products p
+            JOIN categories c ON p.category_id = c.id
+            JOIN brands b ON p.brand_id = b.id
+            WHERE LOWER(p.name) LIKE LOWER(%s)
+            ORDER BY p.name
+            LIMIT 50
+        """, (f"%{q}%",))
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return [{
+        "id": row[0],
+        "name": row[1],
+        "category": row[2],
+        "brand": row[3]
+    } for row in rows]
+
+# ── Tedarikçi Şubesine Mevcut Ürün Ekleme (Senaryo A) ────────────────────────
+
+class BranchProductCreate(BaseModel):
+    product_id: int
+    price: float
+    stock_quantity: int
+
+@app.post("/supplier/{supplier_id}/branches/{branch_id}/products")
+def add_product_to_branch(
+    supplier_id: int,
+    branch_id: int,
+    data: BranchProductCreate
+):
+    # Tedarikçi, sistemdeki mevcut bir ürünü kendi şubesine ekler
+    # Yeni ürün TANIMLAMAZ — sadece bağlantı kurar (branch_products satırı ekler)
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Güvenlik kontrolü 1: Bu şube gerçekten bu tedarikçinin mi?
+        cursor.execute(
+            "SELECT id FROM branches WHERE id = %s AND supplier_id = %s",
+            (branch_id, supplier_id)
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=403,
+                detail="Bu şubeye ürün ekleme yetkiniz yok"
+            )
+
+        # Güvenlik kontrolü 2: Ürün gerçekten sistemde var mı?
+        cursor.execute("SELECT id FROM products WHERE id = %s", (data.product_id,))
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail="Ürün sistemde bulunamadı"
+            )
+
+        # Duplicate kontrolü: Bu ürün zaten bu şubede var mı?
+        cursor.execute(
+            "SELECT id FROM branch_products WHERE branch_id = %s AND product_id = %s",
+            (branch_id, data.product_id)
+        )
+        existing = cursor.fetchone()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Bu ürün zaten bu şubenizde mevcut. Düzenlemek için 'My Products' sayfasını kullanın."
+            )
+
+        # Ekle
+        cursor.execute("""
+            INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+        """, (branch_id, data.product_id, data.price, data.stock_quantity))
+        
+        new_id = cursor.fetchone()[0]
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "message": "Ürün şubenize eklendi",
+        "id": new_id,
+        "branch_id": branch_id,
+        "product_id": data.product_id,
+        "price": data.price,
+        "stock_quantity": data.stock_quantity
     }

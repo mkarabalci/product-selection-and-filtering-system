@@ -5,43 +5,37 @@ import "./Dashboard.css"
 
 function SupplierDashboard() {
   const navigate = useNavigate()
-
-  // localStorage'dan tedarikçi bilgilerini al
   const supplier = JSON.parse(localStorage.getItem("supplier"))
 
-  // Şubeler için state
   const [branches, setBranches] = useState([])
+  const [productCount, setProductCount] = useState(0)
 
-  const [products, setProducts] = useState([])
-
-  // Login kontrolü — login olmamışsa login sayfasına yönlendir
   useEffect(() => {
+    document.title = "Selectra — Tedarikçi Paneli"
     if (!supplier) {
       navigate("/supplier/login")
       return
     }
-    // Tedarikçinin şubelerini çek
     fetch(`http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches`)
       .then(r => r.json())
       .then(setBranches)
 
-    // Tedarikçinin ürünlerini çek
+    // Ürün sayısını çek (özet bilgisi için)
     fetch(`http://127.0.0.1:8000/supplier/${supplier.supplier_id}/products`)
       .then(r => r.json())
-      .then(setProducts)
+      .then(data => setProductCount(data.length))
   }, [])
 
   return (
     <div className="home-page">
-
       {/* Sol sidebar */}
       <aside className="sidebar">
         <h2>SELECTRA</h2>
         <nav>
-          <a href="#">Supplier's Dashboard</a>
-          <a href="#">My Products</a>
-          <a href="#">Add New Product</a>
+          <a href="#" style={{fontWeight: "bold", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "4px", padding: "5px 8px"}}>Supplier's Dashboard</a>
+          <a style={{cursor: "pointer"}} onClick={() => navigate("/supplier/products/new")}>Add New Product</a>
           <a href="#">Live Support</a>
+          <a style={{cursor: "pointer"}} onClick={() => navigate("/supplier/products")}>My Products</a>
           <a style={{cursor: "pointer"}} onClick={() => {
             localStorage.removeItem("supplier")
             navigate("/supplier/login")
@@ -51,8 +45,6 @@ function SupplierDashboard() {
 
       {/* Ana içerik */}
       <main className="home-main">
-
-        {/* Hoşgeldin mesajı */}
         <h2>Welcome, {supplier?.company_name}! 👋</h2>
 
         {/* Üst kartlar */}
@@ -62,6 +54,12 @@ function SupplierDashboard() {
             <h3>Total Views</h3>
             <p className="dashboard-number">+38 ⬆️</p>
             <p className="dashboard-sub">Views from the last week</p>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Total Products</h3>
+            <p className="dashboard-number">{productCount}</p>
+            <p className="dashboard-sub">Şubelerinizdeki toplam ürün</p>
           </div>
 
           <div className="dashboard-card">
@@ -80,32 +78,38 @@ function SupplierDashboard() {
 
         </div>
 
-        {/* Ürün tablosu */}
-        <div className="dashboard-table-section">
-          <h3>My Products</h3>
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-              </tr>
-            </thead>
-            <tbody>
-             {products.length === 0 && (
-              <tr><td colSpan="4">Ürün bulunamadı.</td></tr>
-           )}
-           {products.map((p, i) => (
-             <tr key={i}>
-               <td>{p.name}</td>
-               <td>{p.category}</td>
-               <td>₺{p.price}</td>
-               <td>{p.stock}</td>
-              </tr>
-            ))}
-           </tbody>
-          </table>
+        {/* Hızlı erişim kartları */}
+        <div style={{marginTop: "30px", display: "flex", gap: "15px", flexWrap: "wrap"}}>
+          <button
+            onClick={() => navigate("/supplier/products")}
+            style={{
+              padding: "15px 30px",
+              backgroundColor: "#1976d2",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "15px",
+              fontWeight: "600",
+              cursor: "pointer"
+            }}
+          >
+            📋 Ürünlerimi Görüntüle
+          </button>
+          <button
+            onClick={() => navigate("/supplier/products/new")}
+            style={{
+              padding: "15px 30px",
+              backgroundColor: "#4caf50",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "15px",
+              fontWeight: "600",
+              cursor: "pointer"
+            }}
+          >
+            ➕ Yeni Ürün Ekle
+          </button>
         </div>
 
       </main>

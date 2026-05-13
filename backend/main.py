@@ -1108,3 +1108,36 @@ def add_new_beverage_product(
     finally:
         cursor.close()
         conn.close()
+
+
+@app.get("/beverage-types")
+def get_beverage_types():
+    # beverages_details tablosundaki benzersiz beverage tiplerini getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT DISTINCT beverage_type FROM beverages_details "
+            "WHERE beverage_type IS NOT NULL ORDER BY beverage_type"
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/package-types")
+def get_package_types():
+    # beverages_details'taki package_type array'lerini açıp benzersiz değerleri getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT DISTINCT unnest(package_type) FROM beverages_details ORDER BY 1"
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]

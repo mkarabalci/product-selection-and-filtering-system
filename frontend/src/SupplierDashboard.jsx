@@ -11,7 +11,7 @@ function SupplierDashboard() {
   const [productCount, setProductCount] = useState(0)
 
   useEffect(() => {
-    document.title = "Selectra — Tedarikçi Paneli"
+    document.title = "Selectra — Supplier Dashboard"
     if (!supplier) {
       navigate("/supplier/login")
       return

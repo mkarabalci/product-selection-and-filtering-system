@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import get_connection
 from typing import Optional, List
+from fastapi import Body
 
 app = FastAPI()
 
@@ -881,3 +882,229 @@ def add_product_to_branch(
         "price": data.price,
         "stock_quantity": data.stock_quantity
     }
+
+##marka varsa mevcut id'yi döndürür, yoksa ekleyip yeni id'yi döndürür 
+@app.post("/brands")
+def create_or_get_brand(payload: dict = Body(...)):
+    # Marka adını al, baştaki/sondaki boşlukları temizle
+    name = payload.get("name", "").strip()
+    
+    # Boş ad gönderilmişse hata dön
+    if not name:
+        raise HTTPException(status_code=400, detail="Marka adı boş olamaz")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Aynı isimde marka var mı kontrol et (büyük/küçük harf farkı yok sayılır)
+        cursor.execute(
+            "SELECT id, name FROM brands WHERE LOWER(name) = LOWER(%s)",
+            (name,)
+        )
+        existing = cursor.fetchone()
+        
+        # Marka zaten varsa mevcut id'yi döndür
+        if existing:
+            return {"id": existing[0], "name": existing[1], "created": False}
+        
+        # Marka yoksa ekle, yeni id'yi al (RETURNING ile aynı sorguda)
+        cursor.execute(
+            "INSERT INTO brands (name) VALUES (%s) RETURNING id, name",
+            (name,)
+        )
+        new_brand = cursor.fetchone()
+        conn.commit()  # INSERT yaptığımız için commit şart
+        
+        return {"id": new_brand[0], "name": new_brand[1], "created": True}
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+
+## Tamamen yeni bir snack ürünü sisteme tanıtmak
+@app.post("/supplier/{supplier_id}/branches/{branch_id}/snacks")
+def add_new_snack_product(
+    supplier_id: int,
+    branch_id: int,
+    payload: dict = Body(...)
+):
+    # Gerekli alanları al
+    name = payload.get("name", "").strip()
+    brand_id = payload.get("brand_id")
+    image_url = payload.get("image_url")
+    snacks_type = payload.get("snacks_type")
+    energy_kcal = payload.get("energy_kcal")
+    protein_g = payload.get("protein_g")
+    sugar_g = payload.get("sugar_g")
+    allergens = payload.get("allergens", [])      # PostgreSQL TEXT[] için liste
+    oil_type = payload.get("oil_type", [])
+    packaging = payload.get("packaging")
+    price = payload.get("price")
+    stock_quantity = payload.get("stock_quantity")
+
+    # Temel doğrulama — zorunlu alanlar var mı?
+    if not name or not brand_id or price is None or stock_quantity is None:
+        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1. Güvenlik: Bu şube gerçekten bu tedarikçiye mi ait?
+        cursor.execute(
+            "SELECT supplier_id FROM branches WHERE id = %s",
+            (branch_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+        if row[0] != supplier_id:
+            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+
+        # 2. products tablosuna INSERT (category_id=1 → Snacks)
+        cursor.execute(
+            """
+            INSERT INTO products (name, category_id, brand_id, image_url)
+            VALUES (%s, 1, %s, %s)
+            RETURNING id
+            """,
+            (name, brand_id, image_url)
+        )
+        product_id = cursor.fetchone()[0]
+
+        # 3. snack_details tablosuna INSERT
+        cursor.execute(
+            """
+            INSERT INTO snack_details
+                (product_id, snacks_type, energy_kcal, protein_g, sugar_g,
+                 allergens, oil_type, packaging)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (product_id, snacks_type, energy_kcal, protein_g, sugar_g,
+             allergens, oil_type, packaging)
+        )
+
+        # 4. branch_products tablosuna INSERT (şube/fiyat/stok)
+        cursor.execute(
+            """
+            INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (branch_id, product_id, price, stock_quantity)
+        )
+
+        # Hepsi başarılıysa transaction'ı onayla
+        conn.commit()
+
+        return {
+            "success": True,
+            "product_id": product_id,
+            "message": f"'{name}' başarıyla eklendi"
+        }
+
+    except HTTPException:
+        # 403/404 gibi bilinçli hataları olduğu gibi yukarı fırlat
+        conn.rollback()
+        raise
+    except Exception as e:
+        # Beklenmeyen hatalarda transaction'ı geri al
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+## Yeni bir beverage ürünü sisteme tanıtmak
+@app.post("/supplier/{supplier_id}/branches/{branch_id}/beverages")
+def add_new_beverage_product(
+    supplier_id: int,
+    branch_id: int,
+    payload: dict = Body(...)
+):
+    # Gerekli alanları al
+    name = payload.get("name", "").strip()
+    brand_id = payload.get("brand_id")
+    image_url = payload.get("image_url")
+    beverage_type = payload.get("beverage_type")
+    energy_kcal = payload.get("energy_kcal")
+    ph = payload.get("pH")
+    sugar_g = payload.get("sugar_g")
+    volume = payload.get("volume")
+    packaging = payload.get("packaging")
+    package_type = payload.get("package_type", [])     # PG TEXT[]
+    allergens = payload.get("allergens", [])           # PG TEXT[]
+    is_locally_produced = payload.get("is_locally_produced", False)
+    price = payload.get("price")
+    stock_quantity = payload.get("stock_quantity")
+
+    # Temel doğrulama
+    if not name or not brand_id or price is None or stock_quantity is None:
+        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1. Güvenlik: Bu şube gerçekten bu tedarikçiye mi ait?
+        cursor.execute(
+            "SELECT supplier_id FROM branches WHERE id = %s",
+            (branch_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+        if row[0] != supplier_id:
+            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+
+        # 2. products tablosuna INSERT (category_id=2 → Beverages)
+        cursor.execute(
+            """
+            INSERT INTO products (name, category_id, brand_id, image_url)
+            VALUES (%s, 2, %s, %s)
+            RETURNING id
+            """,
+            (name, brand_id, image_url)
+        )
+        product_id = cursor.fetchone()[0]
+
+        # 3. beverages_details tablosuna INSERT
+        cursor.execute(
+            """
+            INSERT INTO beverages_details
+                (product_id, beverage_type, energy_kcal, pH, sugar_g, volume,
+                 packaging, package_type, allergens, is_locally_produced)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (product_id, beverage_type, energy_kcal, ph, sugar_g, volume,
+             packaging, package_type, allergens, is_locally_produced)
+        )
+
+        # 4. branch_products tablosuna INSERT
+        cursor.execute(
+            """
+            INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (branch_id, product_id, price, stock_quantity)
+        )
+
+        # Hepsi başarılıysa transaction'ı onayla
+        conn.commit()
+
+        return {
+            "success": True,
+            "product_id": product_id,
+            "message": f"'{name}' başarıyla eklendi"
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()

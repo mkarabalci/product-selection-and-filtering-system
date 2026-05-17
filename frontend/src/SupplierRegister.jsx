@@ -14,7 +14,7 @@ function SupplierRegister() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
-  // Kayıt işlemi — API'a şirket adı, email ve şifre gönderir
+  // Kayıt işlemi — API'a şirket adı, email ve şifre 
   const handleRegister = async () => {
     if (password.length < 8) {
       setError("Şifre en az 8 karakter olmalı")
@@ -36,7 +36,7 @@ function SupplierRegister() {
     }
   }
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra - Supplier Register"
 }, [])

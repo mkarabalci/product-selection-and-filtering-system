@@ -43,7 +43,7 @@ function Snacks() {
   // Ürünleri filtreli çek
   const fetchProducts = async () => {
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // gecikmeyi görebilmek için ekledik
+    await new Promise(resolve => setTimeout(resolve, 1000)) // gecikmeyi görebilmek için ekledim
     const params = new URLSearchParams()
     filters.type.forEach(t => params.append("type", t))
     filters.brand.forEach(b => params.append("brand", b))
@@ -65,7 +65,7 @@ function Snacks() {
     setLoading(false)
   }
 
-  // Buton fonksiyonları
+
   const handleApply = () => {
     fetchProducts()
     setShowResults(true)
@@ -91,7 +91,7 @@ function Snacks() {
     setProducts([])
   }
 
-  // Checkbox yardımcı fonksiyonu 
+
   const toggleArray = (field, value) => {
     const current = filters[field]
     const updated = current.includes(value)
@@ -100,7 +100,7 @@ function Snacks() {
     setFilters({ ...filters, [field]: updated })
   }
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra - Snacks"
 }, [])

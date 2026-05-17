@@ -7,10 +7,8 @@ function MyProducts() {
   const navigate = useNavigate()
   const supplier = JSON.parse(localStorage.getItem("supplier"))
 
-  // Ürünler
   const [products, setProducts] = useState([])
 
-  // Arama
   const [searchQuery, setSearchQuery] = useState("")
 
   // Düzenleme state'leri
@@ -106,13 +104,12 @@ function MyProducts() {
     }
   }
 
-  // Google Maps'te şube adresini aç
   const openInMaps = (address) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
     window.open(url, "_blank")
   }
 
-  // Arama filtresi — ürün adı VE kategoride arar
+  // Arama filtresi 
   const filteredProducts = products.filter(p => {
     const q = searchQuery.toLowerCase().trim()
     if (!q) return true

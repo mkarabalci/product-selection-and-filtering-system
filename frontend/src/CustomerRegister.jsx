@@ -37,7 +37,7 @@ function CustomerRegister() {
     }
   }
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra - Customer Register"
 }, [])

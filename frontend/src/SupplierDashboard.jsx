@@ -20,7 +20,7 @@ function SupplierDashboard() {
       .then(r => r.json())
       .then(setBranches)
 
-    // Ürün sayısını çek (özet bilgisi için)
+    // Ürün sayısını çek özet bilgisi için
     fetch(`http://127.0.0.1:8000/supplier/${supplier.supplier_id}/products`)
       .then(r => r.json())
       .then(data => setProductCount(data.length))

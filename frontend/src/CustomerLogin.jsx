@@ -23,16 +23,14 @@ function CustomerLogin() {
 
     if (res.ok) {
       const data = await res.json()
-      // Kullanıcı bilgilerini localStorage'a kaydet
       localStorage.setItem("customer", JSON.stringify(data))
-      // Ana sayfaya yönlendir
       navigate("/home")
     } else {
       setError("Email veya şifre yanlış")
     }
   }
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra - Customer Login"
 }, [])

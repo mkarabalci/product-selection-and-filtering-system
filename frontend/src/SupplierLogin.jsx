@@ -12,7 +12,7 @@ function SupplierLogin() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
-  // Login işlemi — API'a email ve şifre gönderir
+  // Login işlemi 
   const handleLogin = async () => {
     const res = await fetch(`${API}/supplier/login`, {
       method: "POST",
@@ -22,16 +22,13 @@ function SupplierLogin() {
 
     if (res.ok) {
       const data = await res.json()
-      // Tedarikçi bilgilerini localStorage'a kaydet
       localStorage.setItem("supplier", JSON.stringify(data))
-      // Tedarikçi paneline yönlendir
       navigate("/supplier/dashboard")
     } else {
       setError("Email veya şifre yanlış")
     }
   }
 
-  // Sayfa başlığını ayarla
 useEffect(() => {
   document.title = "Selectra - Supplier Login"
 }, [])

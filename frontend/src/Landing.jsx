@@ -5,7 +5,7 @@ import "./Landing.css"
 function Landing() {
   const navigate = useNavigate()
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra"
 }, [])

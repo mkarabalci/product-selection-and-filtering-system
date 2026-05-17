@@ -9,7 +9,7 @@ function Home() {
   // localStorage'dan kullanıcı bilgilerini al
   const customer = JSON.parse(localStorage.getItem("customer"))
 
-  // Sayfa başlığını ayarla
+
 useEffect(() => {
   document.title = "Selectra - HomePage"
 }, [])

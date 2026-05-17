@@ -5,7 +5,6 @@ function Sidebar() {
   const navigate = useNavigate()
 
   return (
-    // Sol sidebar - tüm sayfalarda ortak kullanılır
     <aside className="sidebar">
       
       {/* Logo - tıklayınca ana sayfaya döner */}

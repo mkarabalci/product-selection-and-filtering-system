@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Genel Endpointler ────────────────────────────────────────────────────────
+
 
 @app.get("/")
 def home():
@@ -23,12 +23,11 @@ def home():
 
 @app.get("/test-db")
 def test_db():
-    # Veritabanı bağlantısını test eder
     conn = get_connection()
     conn.close()
     return {"message": "Veritabani baglantisi basarili!"}
 
-# ── Ürün Endpointleri ────────────────────────────────────────────────────────
+#  Ürün Endpointleri
 
 @app.get("/snacks")
 def get_snacks():
@@ -85,7 +84,7 @@ def filter_snacks(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None
 ):
-    # Kullanıcının seçtiği filtrelere göre dinamik SQL sorgusu oluşturur
+    
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -126,7 +125,6 @@ def filter_snacks(
         query += " AND sd.sugar_g <= %s"
         params.append(max_sugar)
     if oil_type:
-        # Seçilen tüm yağ tiplerini içeren ürünleri getirir
         for o in oil_type:
             query += " AND %s = ANY(sd.oil_type)"
             params.append(o)
@@ -134,7 +132,6 @@ def filter_snacks(
         query += " AND sd.packaging = %s"
         params.append(packaging)
     if allergen_free:
-        # Seçilen allerjenleri içermeyen ürünleri getirir
         for a in allergen_free:
             query += " AND NOT (%s = ANY(sd.allergens))"
             params.append(a)
@@ -176,13 +173,10 @@ def filter_snacks(
         "image_url": row[14]
     } for row in rows], media_type="application/json; charset=utf-8")
 
-# ── Filtre Seçenekleri Endpointleri ─────────────────────────────────────────
-# Bu endpointler frontend'deki filtre kartlarını veritabanından doldurur
-# Yeni veri eklendiğinde frontend otomatik güncellenir
+
 
 @app.get("/brands")
 def get_brands():
-    # Tüm markaları alfabetik sırayla getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -195,7 +189,6 @@ def get_brands():
 
 @app.get("/suppliers")
 def get_suppliers():
-    # Tüm tedarikçileri alfabetik sırayla getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -208,7 +201,6 @@ def get_suppliers():
 
 @app.get("/snack-types")
 def get_snack_types():
-    # Veritabanındaki benzersiz atıştırmalık tiplerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -221,7 +213,6 @@ def get_snack_types():
 
 @app.get("/allergens")
 def get_allergens():
-    # snack_details tablosundaki tüm allerjen array'lerini açıp benzersiz olanları getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -234,7 +225,6 @@ def get_allergens():
 
 @app.get("/oil-types")
 def get_oil_types():
-    # snack_details tablosundaki tüm yağ tipi array'lerini açıp benzersiz olanları getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -247,7 +237,6 @@ def get_oil_types():
 
 @app.get("/packaging-types")
 def get_packaging_types():
-    # Veritabanındaki benzersiz ambalaj tiplerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -259,11 +248,9 @@ def get_packaging_types():
     return [row[0] for row in rows]
 
 
-# ── İçecek Endpointleri ──────────────────────────────────────────────────────
 
 @app.get("/beverages")
 def get_beverages():
-    # Stokta olan tüm içecekleri şube, fiyat ve detaylarıyla getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -298,30 +285,21 @@ def get_beverages():
 
 @app.get("/beverages/filter")
 def filter_beverages(
-    # Ürün özellikleri
     beverage_type: Optional[List[str]] = Query(default=None),
-    # Besin değerleri
     min_calories: Optional[int] = None,
     max_calories: Optional[int] = None,
     max_sugar: Optional[float] = None,
-    # Hacim
     volume_ml: Optional[int] = None,
-    # pH
     min_ph: Optional[float] = None,
     max_ph: Optional[float] = None,
-    # Paket
     package_type: Optional[List[str]] = Query(default=None),
     packaging: Optional[int] = None,
-    # Allerjenler
     allergen_free: Optional[List[str]] = Query(default=None),
-    # Marka ve tedarikçi
     brand: Optional[List[str]] = Query(default=None),
     supplier: Optional[List[str]] = Query(default=None),
-    # Fiyat aralığı
     min_price: Optional[float] = None,
     max_price: Optional[float] = None
 ):
-    # Kullanıcının seçtiği filtrelere göre dinamik SQL sorgusu oluşturur
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -341,7 +319,6 @@ def filter_beverages(
     """
     params = []
 
-    # Filtreler dinamik olarak eklenir
     if beverage_type:
         placeholders = ",".join(["%s"] * len(beverage_type))
         query += f" AND bd.beverage_type IN ({placeholders})"
@@ -369,7 +346,6 @@ def filter_beverages(
             query += " AND %s = ANY(bd.package_type)"
             params.append(pt)
     if allergen_free:
-        # Seçilen allerjenleri içermeyen ürünleri getirir
         for a in allergen_free:
             query += " AND NOT (%s = ANY(bd.allergens))"
             params.append(a)
@@ -407,11 +383,9 @@ def filter_beverages(
     } for row in rows], media_type="application/json; charset=utf-8")
 
 
-# ── İçecek Filtre Seçenekleri ────────────────────────────────────────────────
 
 @app.get("/beverage-types")
 def get_beverage_types():
-    # Veritabanındaki benzersiz içecek tiplerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -424,7 +398,6 @@ def get_beverage_types():
 
 @app.get("/beverage-allergens")
 def get_beverage_allergens():
-    # beverages_details tablosundaki tüm allerjen array'lerini açıp benzersiz olanları getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -437,7 +410,6 @@ def get_beverage_allergens():
 
 @app.get("/beverage-package-types")
 def get_beverage_package_types():
-    # Veritabanındaki benzersiz paket tiplerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -450,7 +422,6 @@ def get_beverage_package_types():
 
 @app.get("/beverage-brands")
 def get_beverage_brands():
-    # Sadece içecek ürünlerinde kullanılan markaları getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -470,7 +441,6 @@ def get_beverage_brands():
 
 @app.get("/snack-brands")
 def get_snack_brands():
-    # Sadece snack ürünlerinde kullanılan markaları getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -488,12 +458,13 @@ def get_snack_brands():
         conn.close()
     return [row[0] for row in rows]
 
-# ── Tedarikçi Login ──────────────────────────────────────────────────────────
+
+# Tedarikçi Login 
 
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-# Login için gelen veri modeli
+
 class SupplierLogin(BaseModel):
     email: str
     password: str
@@ -503,7 +474,6 @@ def supplier_login(data: SupplierLogin):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Email ile tedarikçiyi bul
         cursor.execute(
             "SELECT id, company_name, password FROM suppliers WHERE email = %s",
             (data.email,)
@@ -513,22 +483,18 @@ def supplier_login(data: SupplierLogin):
         cursor.close()
         conn.close()
 
-    # Tedarikçi bulunamadıysa hata ver
     if not supplier:
         raise HTTPException(status_code=401, detail="Email bulunamadı")
 
-    # Şifre yanlışsa hata ver
     if supplier[2] != data.password:
         raise HTTPException(status_code=401, detail="Şifre yanlış")
 
-    # Başarılı girişte tedarikçi bilgilerini döndür
     return {
         "message": "Giriş başarılı",
         "supplier_id": supplier[0],
         "company_name": supplier[1]
     }
 
-# Kayıt için gelen veri modeli
 class SupplierRegister(BaseModel):
     company_name: str
     email: str
@@ -539,7 +505,6 @@ def supplier_register(data: SupplierRegister):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Email daha önce kayıtlı mı kontrol et
         cursor.execute(
             "SELECT id FROM suppliers WHERE email = %s",
             (data.email,)
@@ -549,7 +514,6 @@ def supplier_register(data: SupplierRegister):
         if existing:
             raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
 
-        # Yeni tedarikçiyi ekle
         cursor.execute(
             "INSERT INTO suppliers (company_name, email, password) VALUES (%s, %s, %s) RETURNING id",
             (data.company_name, data.email, data.password)
@@ -568,7 +532,6 @@ def supplier_register(data: SupplierRegister):
 
 @app.get("/supplier/{supplier_id}/branches")
 def get_supplier_branches(supplier_id: int):
-    # Tedarikçinin şubelerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -584,8 +547,6 @@ def get_supplier_branches(supplier_id: int):
 
 @app.get("/supplier/{supplier_id}/products")
 def get_supplier_products(supplier_id: int):
-    # Tedarikçinin tüm şubelerindeki ürünleri getirir
-    # bp.id, branch_id ve product_id eklendi — frontend'in düzenleme/silme yapabilmesi için
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -619,8 +580,8 @@ def get_supplier_products(supplier_id: int):
         "branch_address": row[8]
     } for row in rows]
 
-# ── Kullanıcı Login ve Register ──────────────────────────────────────────────
 
+#  Kullanıcı Login ve Register
 class CustomerLogin(BaseModel):
     username: str
     email: str
@@ -675,7 +636,6 @@ def customer_register(data: CustomerRegister):
         if existing:
             raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
         
-        # Ad ve soyadı birleştirerek username olarak kaydet
         username = f"{data.first_name} {data.last_name}"
         cursor.execute(
             "INSERT INTO customers (username, email, password) VALUES (%s, %s, %s) RETURNING id",
@@ -692,9 +652,10 @@ def customer_register(data: CustomerRegister):
         "customer_id": new_id,
         "username": username
     }
-# ── Tedarikçi Ürün Düzenleme ve Silme ────────────────────────────────────────
 
-# Ürün güncelleme için veri modeli
+# Tedarikçi Ürün Düzenleme ve Silme 
+
+
 class BranchProductUpdate(BaseModel):
     price: float
     stock_quantity: int
@@ -705,11 +666,9 @@ def update_supplier_product(
     branch_product_id: int,
     data: BranchProductUpdate
 ):
-    # Tedarikçinin kendi şubesindeki bir ürünün fiyat ve stoğunu günceller
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Güvenlik kontrolü: bu branch_product gerçekten bu supplier'a mı ait?
         cursor.execute("""
             SELECT bp.id
             FROM branch_products bp
@@ -724,7 +683,6 @@ def update_supplier_product(
                 detail="Bu ürünü düzenleme yetkiniz yok"
             )
 
-        # Fiyat ve stok güncelle
         cursor.execute("""
             UPDATE branch_products
             SET price = %s, stock_quantity = %s
@@ -746,12 +704,9 @@ def update_supplier_product(
 
 @app.delete("/supplier/{supplier_id}/products/{branch_product_id}")
 def delete_supplier_product(supplier_id: int, branch_product_id: int):
-    # Tedarikçinin kendi şubesinden bir ürünü kaldırır
-    # Not: Ürün tüm sistemden silinmez, sadece bu şubeden kaldırılır
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Güvenlik kontrolü: bu branch_product gerçekten bu supplier'a mı ait?
         cursor.execute("""
             SELECT bp.id
             FROM branch_products bp
@@ -766,7 +721,6 @@ def delete_supplier_product(supplier_id: int, branch_product_id: int):
                 detail="Bu ürünü silme yetkiniz yok"
             )
 
-        # Sil
         cursor.execute(
             "DELETE FROM branch_products WHERE id = %s",
             (branch_product_id,)
@@ -781,13 +735,11 @@ def delete_supplier_product(supplier_id: int, branch_product_id: int):
         "id": branch_product_id
     }
 
-# ── Ürün Arama (Yeni Ürün Ekleme Formu İçin) ─────────────────────────────────
+
 
 @app.get("/products/search")
 def search_products(q: str = ""):
-    # Ürün adına göre arama yapar — Add New Product formunda kullanılır
-    # Tedarikçi ürün adını yazdıkça eşleşenleri döndürür
-    # Boş sorgu gelirse tüm ürünleri (max 50) döndürür
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -812,7 +764,7 @@ def search_products(q: str = ""):
         "brand": row[3]
     } for row in rows]
 
-# ── Tedarikçi Şubesine Mevcut Ürün Ekleme (Senaryo A) ────────────────────────
+
 
 class BranchProductCreate(BaseModel):
     product_id: int
@@ -825,12 +777,11 @@ def add_product_to_branch(
     branch_id: int,
     data: BranchProductCreate
 ):
-    # Tedarikçi, sistemdeki mevcut bir ürünü kendi şubesine ekler
-    # Yeni ürün TANIMLAMAZ — sadece bağlantı kurar (branch_products satırı ekler)
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Güvenlik kontrolü 1: Bu şube gerçekten bu tedarikçinin mi?
+
         cursor.execute(
             "SELECT id FROM branches WHERE id = %s AND supplier_id = %s",
             (branch_id, supplier_id)
@@ -841,7 +792,7 @@ def add_product_to_branch(
                 detail="Bu şubeye ürün ekleme yetkiniz yok"
             )
 
-        # Güvenlik kontrolü 2: Ürün gerçekten sistemde var mı?
+
         cursor.execute("SELECT id FROM products WHERE id = %s", (data.product_id,))
         if not cursor.fetchone():
             raise HTTPException(
@@ -849,7 +800,7 @@ def add_product_to_branch(
                 detail="Ürün sistemde bulunamadı"
             )
 
-        # Duplicate kontrolü: Bu ürün zaten bu şubede var mı?
+
         cursor.execute(
             "SELECT id FROM branch_products WHERE branch_id = %s AND product_id = %s",
             (branch_id, data.product_id)
@@ -883,37 +834,36 @@ def add_product_to_branch(
         "stock_quantity": data.stock_quantity
     }
 
-##marka varsa mevcut id'yi döndürür, yoksa ekleyip yeni id'yi döndürür 
+##marka varsa mevcut id'yi döndürür yoksa ekleyip yeni id'yi döndürür 
 @app.post("/brands")
 def create_or_get_brand(payload: dict = Body(...)):
     # Marka adını al, baştaki/sondaki boşlukları temizle
     name = payload.get("name", "").strip()
     
-    # Boş ad gönderilmişse hata dön
+
     if not name:
         raise HTTPException(status_code=400, detail="Marka adı boş olamaz")
     
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Aynı isimde marka var mı kontrol et (büyük/küçük harf farkı yok sayılır)
         cursor.execute(
             "SELECT id, name FROM brands WHERE LOWER(name) = LOWER(%s)",
             (name,)
         )
         existing = cursor.fetchone()
         
-        # Marka zaten varsa mevcut id'yi döndür
+
         if existing:
             return {"id": existing[0], "name": existing[1], "created": False}
         
-        # Marka yoksa ekle, yeni id'yi al (RETURNING ile aynı sorguda)
+
         cursor.execute(
             "INSERT INTO brands (name) VALUES (%s) RETURNING id, name",
             (name,)
         )
         new_brand = cursor.fetchone()
-        conn.commit()  # INSERT yaptığımız için commit şart
+        conn.commit()  
         
         return {"id": new_brand[0], "name": new_brand[1], "created": True}
     
@@ -937,13 +887,12 @@ def add_new_snack_product(
     energy_kcal = payload.get("energy_kcal")
     protein_g = payload.get("protein_g")
     sugar_g = payload.get("sugar_g")
-    allergens = payload.get("allergens", [])      # PostgreSQL TEXT[] için liste
+    allergens = payload.get("allergens", [])     
     oil_type = payload.get("oil_type", [])
     packaging = payload.get("packaging")
     price = payload.get("price")
     stock_quantity = payload.get("stock_quantity")
 
-    # Temel doğrulama — zorunlu alanlar var mı?
     if not name or not brand_id or price is None or stock_quantity is None:
         raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
 
@@ -951,7 +900,6 @@ def add_new_snack_product(
     cursor = conn.cursor()
 
     try:
-        # 1. Güvenlik: Bu şube gerçekten bu tedarikçiye mi ait?
         cursor.execute(
             "SELECT supplier_id FROM branches WHERE id = %s",
             (branch_id,)
@@ -962,7 +910,6 @@ def add_new_snack_product(
         if row[0] != supplier_id:
             raise HTTPException(status_code=403, detail="Bu şube size ait değil")
 
-        # 2. products tablosuna INSERT (category_id=1 → Snacks)
         cursor.execute(
             """
             INSERT INTO products (name, category_id, brand_id, image_url)
@@ -973,7 +920,6 @@ def add_new_snack_product(
         )
         product_id = cursor.fetchone()[0]
 
-        # 3. snack_details tablosuna INSERT
         cursor.execute(
             """
             INSERT INTO snack_details
@@ -985,7 +931,6 @@ def add_new_snack_product(
              allergens, oil_type, packaging)
         )
 
-        # 4. branch_products tablosuna INSERT (şube/fiyat/stok)
         cursor.execute(
             """
             INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
@@ -994,7 +939,6 @@ def add_new_snack_product(
             (branch_id, product_id, price, stock_quantity)
         )
 
-        # Hepsi başarılıysa transaction'ı onayla
         conn.commit()
 
         return {
@@ -1004,11 +948,9 @@ def add_new_snack_product(
         }
 
     except HTTPException:
-        # 403/404 gibi bilinçli hataları olduğu gibi yukarı fırlat
         conn.rollback()
         raise
     except Exception as e:
-        # Beklenmeyen hatalarda transaction'ı geri al
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
     finally:
@@ -1023,7 +965,7 @@ def add_new_beverage_product(
     branch_id: int,
     payload: dict = Body(...)
 ):
-    # Gerekli alanları al
+
     name = payload.get("name", "").strip()
     brand_id = payload.get("brand_id")
     image_url = payload.get("image_url")
@@ -1033,13 +975,13 @@ def add_new_beverage_product(
     sugar_g = payload.get("sugar_g")
     volume = payload.get("volume")
     packaging = payload.get("packaging")
-    package_type = payload.get("package_type", [])     # PG TEXT[]
-    allergens = payload.get("allergens", [])           # PG TEXT[]
+    package_type = payload.get("package_type", [])   
+    allergens = payload.get("allergens", [])         
     is_locally_produced = payload.get("is_locally_produced", False)
     price = payload.get("price")
     stock_quantity = payload.get("stock_quantity")
 
-    # Temel doğrulama
+
     if not name or not brand_id or price is None or stock_quantity is None:
         raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
 
@@ -1047,7 +989,6 @@ def add_new_beverage_product(
     cursor = conn.cursor()
 
     try:
-        # 1. Güvenlik: Bu şube gerçekten bu tedarikçiye mi ait?
         cursor.execute(
             "SELECT supplier_id FROM branches WHERE id = %s",
             (branch_id,)
@@ -1058,7 +999,6 @@ def add_new_beverage_product(
         if row[0] != supplier_id:
             raise HTTPException(status_code=403, detail="Bu şube size ait değil")
 
-        # 2. products tablosuna INSERT (category_id=2 → Beverages)
         cursor.execute(
             """
             INSERT INTO products (name, category_id, brand_id, image_url)
@@ -1069,7 +1009,6 @@ def add_new_beverage_product(
         )
         product_id = cursor.fetchone()[0]
 
-        # 3. beverages_details tablosuna INSERT
         cursor.execute(
             """
             INSERT INTO beverages_details
@@ -1081,7 +1020,6 @@ def add_new_beverage_product(
              packaging, package_type, allergens, is_locally_produced)
         )
 
-        # 4. branch_products tablosuna INSERT
         cursor.execute(
             """
             INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
@@ -1090,7 +1028,6 @@ def add_new_beverage_product(
             (branch_id, product_id, price, stock_quantity)
         )
 
-        # Hepsi başarılıysa transaction'ı onayla
         conn.commit()
 
         return {
@@ -1112,7 +1049,6 @@ def add_new_beverage_product(
 
 @app.get("/beverage-types")
 def get_beverage_types():
-    # beverages_details tablosundaki benzersiz beverage tiplerini getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -1129,7 +1065,6 @@ def get_beverage_types():
 
 @app.get("/package-types")
 def get_package_types():
-    # beverages_details'taki package_type array'lerini açıp benzersiz değerleri getirir
     conn = get_connection()
     cursor = conn.cursor()
     try:

@@ -14,7 +14,7 @@ function AddProduct() {
   // Arama
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState([])
-  const [hasSearched, setHasSearched] = useState(false)  // arama yapıldı mı (sonuç boşsa "bulunamadı" göstermek için)
+  const [hasSearched, setHasSearched] = useState(false)  
 
   // Seçilen ürün
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -27,20 +27,20 @@ function AddProduct() {
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
 
-  // Yeni ürün tanımlama modu (Senaryo B)
-  const [mode, setMode] = useState("search")  // "search" veya "create"
-  const [category, setCategory] = useState("snack")  // "snack" veya "beverage"
+  // Yeni ürün tanımlama modu
+  const [mode, setMode] = useState("search")  
+  const [category, setCategory] = useState("snack")  
 
-  // Dropdown verileri (backend'den çekilecek)
+  // Dropdown verileri 
   const [brandsList, setBrandsList] = useState([])
   const [snackTypesList, setSnackTypesList] = useState([])
   const [allergensList, setAllergensList] = useState([])
   const [oilTypesList, setOilTypesList] = useState([])
   const [packagingList, setPackagingList] = useState([])
 
-  // Yeni ürün form alanları (ortak)
+  // Yeni ürün form alanları ortak
   const [newProductName, setNewProductName] = useState("")
-  const [newBrandName, setNewBrandName] = useState("")  // combobox: dropdown VEYA yazılan değer
+  const [newBrandName, setNewBrandName] = useState("")  
   const [newImageUrl, setNewImageUrl] = useState("")
   const [newPrice, setNewPrice] = useState("")
   const [newStock, setNewStock] = useState("")
@@ -50,16 +50,16 @@ function AddProduct() {
   const [energyKcal, setEnergyKcal] = useState("")
   const [proteinG, setProteinG] = useState("")
   const [sugarG, setSugarG] = useState("")
-  const [selectedAllergens, setSelectedAllergens] = useState([])  // multi-select
-  const [selectedOilTypes, setSelectedOilTypes] = useState([])    // multi-select
+  const [selectedAllergens, setSelectedAllergens] = useState([]) 
+  const [selectedOilTypes, setSelectedOilTypes] = useState([])   
   const [packaging, setPackaging] = useState("")
 
-  // Beverage'a özel state'ler
+  // Beverage stateler
   const [beverageType, setBeverageType] = useState("")
   const [pH, setPH] = useState("")
   const [volume, setVolume] = useState("")
-  const [bevPackaging, setBevPackaging] = useState("")  // INT (1, 6, 12...)
-  const [selectedPackageTypes, setSelectedPackageTypes] = useState([])  // multi-select
+  const [bevPackaging, setBevPackaging] = useState("") 
+  const [selectedPackageTypes, setSelectedPackageTypes] = useState([])  
   const [isLocallyProduced, setIsLocallyProduced] = useState(false)
 
   // Beverage için dropdown verileri
@@ -80,12 +80,11 @@ function AddProduct() {
       .then(r => r.json())
       .then(data => {
         setBranches(data)
-        // İlk şubeyi otomatik seç
         if (data.length > 0) setSelectedBranchId(data[0].id)
       })
   }, [])
 
-  // Yeni ürün formu için gerekli dropdown verilerini çek (sayfa açıldığında bir kez)
+  // Yeni ürün formu için gerekli dropdown verilerini çek sayfa açıldığında bir kez
   useEffect(() => {
    fetch("http://127.0.0.1:8000/snack-brands")
     .then(r => r.json())
@@ -120,16 +119,15 @@ function AddProduct() {
     .then(setPackageTypesList)
   }, [])
 
-  // Arama kutusuna yazıldığında otomatik arama yapar (debounce ile)
-  useEffect(() => {
-    // Arama kutusu boşsa sonuçları temizle
+  // Arama kutusuna yazıldığında otomatik arama yapar 
+  useEffect(() => { // Arama kutusu boşsa sonuçları temizle
     if (searchQuery.trim() === "") {
       setSearchResults([])
       setHasSearched(false)
       return
     }
 
-    // 300ms bekle, kullanıcı yazmaya devam ediyorsa boşuna istek atma
+    // 300ms bekle kullanıcı yazmaya devam ediyorsa boşuna istek atma
     const timer = setTimeout(() => {
       fetch(`http://127.0.0.1:8000/products/search?q=${encodeURIComponent(searchQuery)}`)
         .then(r => r.json())
@@ -216,7 +214,7 @@ function AddProduct() {
     }
   }
 
-  // Yeni ürün tanımlama submit (Senaryo B)
+  // Yeni ürün tanımlama submit 
 const handleCreateNewProduct = async () => {
   setErrorMessage("")
   setSuccessMessage("")
@@ -248,7 +246,6 @@ const handleCreateNewProduct = async () => {
   setIsSubmitting(true)
 
   try {
-    // 1. Önce markayı oluştur/getir
     const brandResp = await fetch("http://127.0.0.1:8000/brands", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -263,7 +260,6 @@ const handleCreateNewProduct = async () => {
     const brandData = await brandResp.json()
     const brandId = brandData.id
 
-   // Kategoriye göre endpoint ve body'yi belirle
 let endpoint, body
 if (category === "snack") {
   endpoint = `http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches/${selectedBranchId}/snacks`
@@ -282,7 +278,6 @@ if (category === "snack") {
     stock_quantity: stockNum
   }
 } else {
-  // beverage
   endpoint = `http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches/${selectedBranchId}/beverages`
   body = {
     name: newProductName.trim(),
@@ -315,7 +310,7 @@ const productResp = await fetch(endpoint, {
       return
     }
 
-    // Başarılı — formu sıfırla, search moduna dön
+    // Başarılı — formu sıfırla search moduna dön
     const branchName = branches.find(b => b.id === parseInt(selectedBranchId))?.name
     setSuccessMessage(`✅ "${newProductName}" başarıyla "${branchName}" şubesine eklendi`)
 
@@ -469,7 +464,7 @@ useEffect(() => {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
-                setSelectedProduct(null)  // arama değişince seçim sıfırlansın
+                setSelectedProduct(null)  
               }}
               disabled={selectedProduct !== null}
               style={{
@@ -513,7 +508,6 @@ useEffect(() => {
                   ))}
                 </div>
               ) : hasSearched ? (
-                // Arama yapıldı ama sonuç yok — B senaryosuna yönlendir
                 <div style={{
                   padding: "15px",
                   backgroundColor: "#fff8e1",

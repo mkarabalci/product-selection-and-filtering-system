@@ -96,7 +96,7 @@ function Beverages() {
     setProducts([])
   }
 
-  // Sayfa başlığını ayarla
+  
 useEffect(() => {
   document.title = "Selectra - Beverages"
 }, [])

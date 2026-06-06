@@ -220,21 +220,21 @@ function AddProduct() {
 
     // Doğrulama
     if (!selectedBranchId) {
-      setErrorMessage("Lütfen bir şube seçin")
+      setErrorMessage("Please select a branch")
       return
     }
     if (!selectedProduct) {
-      setErrorMessage("Lütfen bir ürün seçin")
+      setErrorMessage("Please select a product")
       return
     }
     const priceNum = parseFloat(price)
     const stockNum = parseInt(stock)
     if (isNaN(priceNum) || priceNum < 0) {
-      setErrorMessage("Geçerli bir fiyat girin")
+      setErrorMessage("Please enter a valid price")
       return
     }
     if (isNaN(stockNum) || stockNum < 0) {
-      setErrorMessage("Geçerli bir stok değeri girin")
+      setErrorMessage("Please enter a valid stock quantity")
       return
     }
 
@@ -254,13 +254,13 @@ function AddProduct() {
 
       if (!response.ok) {
         const err = await response.json()
-        setErrorMessage(err.detail || "Ekleme başarısız")
+        setErrorMessage(err.detail || "Addition failed")
         return
       }
 
       // Başarılı — formu sıfırla
       const branchName = branches.find(b => b.id === parseInt(selectedBranchId))?.name
-      setSuccessMessage(`✅ "${selectedProduct.name}" başarıyla "${branchName}" şubesine eklendi`)
+      setSuccessMessage(`✅ "${selectedProduct.name}" successfully added to "${branchName}" branch`)
       setSelectedProduct(null)
       setSearchQuery("")
       setSearchResults([])
@@ -268,7 +268,7 @@ function AddProduct() {
       setStock("")
       setHasSearched(false)
     } catch (err) {
-      setErrorMessage("Sunucuya bağlanılamadı")
+      setErrorMessage("Failed to connect to server")
     }
   }
 
@@ -279,25 +279,25 @@ const handleCreateNewProduct = async () => {
 
   // Doğrulama
   if (!selectedBranchId) {
-    setErrorMessage("Lütfen bir şube seçin")
+    setErrorMessage("Please select a branch")
     return
   }
   if (!newProductName.trim()) {
-    setErrorMessage("Ürün adı boş olamaz")
+    setErrorMessage("Product name cannot be empty")
     return
   }
   if (!newBrandName.trim()) {
-    setErrorMessage("Marka adı boş olamaz")
+    setErrorMessage("Brand name cannot be empty")
     return
   }
   const priceNum = parseFloat(newPrice)
   const stockNum = parseInt(newStock)
   if (isNaN(priceNum) || priceNum < 0) {
-    setErrorMessage("Geçerli bir fiyat girin")
+    setErrorMessage("Please enter a valid price")
     return
   }
   if (isNaN(stockNum) || stockNum < 0) {
-    setErrorMessage("Geçerli bir stok değeri girin")
+    setErrorMessage("Please enter a valid stock quantity")
     return
   }
 
@@ -311,7 +311,7 @@ const handleCreateNewProduct = async () => {
     })
     if (!brandResp.ok) {
       const err = await brandResp.json()
-      setErrorMessage(err.detail || "Marka eklenemedi")
+      setErrorMessage(err.detail || "Failed to add brand")
       setIsSubmitting(false)
       return
     }
@@ -384,14 +384,14 @@ const productResp = await fetch(endpoint, {
 
     if (!productResp.ok) {
       const err = await productResp.json()
-      setErrorMessage(err.detail || "Ürün eklenemedi")
+      setErrorMessage(err.detail || "Failed to add product")
       setIsSubmitting(false)
       return
     }
 
     // Başarılı — formu sıfırla search moduna dön
     const branchName = branches.find(b => b.id === parseInt(selectedBranchId))?.name
-    setSuccessMessage(`✅ "${newProductName}" başarıyla "${branchName}" şubesine eklendi`)
+    setSuccessMessage(`✅ "${newProductName}" successfully added to "${branchName}" branch`)
 
     // Tüm form alanlarını temizle
     setMode("search")
@@ -425,7 +425,7 @@ const productResp = await fetch(endpoint, {
     setPcProductForm("")
     setPcVolumeMl("")
   } catch (err) {
-    setErrorMessage("Sunucuya bağlanılamadı")
+    setErrorMessage("Failed to connect to server")
   } finally {
     setIsSubmitting(false)
   }
@@ -479,7 +479,7 @@ useEffect(() => {
       <main className="home-main">
         <h2>Add New Product</h2>
         <p style={{color: "#666", marginBottom: "20px"}}>
-          Mevcut bir ürünü şubenize ekleyin
+          Add an existing product to your branch
         </p>
 
         {/* Başarı mesajı */}
@@ -544,11 +544,11 @@ useEffect(() => {
           {/* Ürün arama */}
           <div style={{marginBottom: "20px"}}>
             <label style={{display: "block", marginBottom: "8px", fontWeight: "600"}}>
-              Ürün ara
+              Search Product
             </label>
             <input
               type="text"
-              placeholder="Ürün adı yazın (örn: dido, coca-cola...)"
+              placeholder="Enter product name (e.g., dido, coca-cola...)"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
@@ -603,7 +603,7 @@ useEffect(() => {
                   border: "1px solid #ffe082"
                 }}>
                   <p style={{margin: "0 0 10px 0"}}>
-                    ⚠️ "<strong>{searchQuery}</strong>" sistemde bulunamadı.
+                    ⚠️ "<strong>{searchQuery}</strong>" not found in the system.
                   </p>
                   <button
                     onClick={() => {
@@ -619,7 +619,7 @@ useEffect(() => {
                       cursor: "pointer"
                     }}
                   >
-                    Yeni Ürün Tanımla 
+                    Add New Product 
                   </button>
                 </div>
               ) : null}
@@ -639,7 +639,7 @@ useEffect(() => {
                 alignItems: "center"
               }}>
                 <div>
-                  ✅ Seçilen ürün: <strong>{selectedProduct.name}</strong> ({selectedProduct.brand}, {selectedProduct.category})
+                  ✅ Selected Product: <strong>{selectedProduct.name}</strong> ({selectedProduct.brand}, {selectedProduct.category})
                 </div>
                 <button
                   onClick={handleClearSelection}
@@ -652,14 +652,14 @@ useEffect(() => {
                     cursor: "pointer"
                   }}
                 >
-                  Değiştir
+                  Change
                 </button>
               </div>
 
               <div style={{display: "flex", gap: "15px", marginBottom: "20px"}}>
                 <div style={{flex: 1}}>
                   <label style={{display: "block", marginBottom: "8px", fontWeight: "600"}}>
-                    Fiyat (₺)
+                    Price (₺)
                   </label>
                   <input
                     type="number"
@@ -678,7 +678,7 @@ useEffect(() => {
                 </div>
                 <div style={{flex: 1}}>
                   <label style={{display: "block", marginBottom: "8px", fontWeight: "600"}}>
-                    Stok adedi
+                    Stock Quantity
                   </label>
                   <input
                     type="number"
@@ -710,7 +710,7 @@ useEffect(() => {
                   width: "100%"
                 }}
               >
-                Şubeme Ekle
+                Add to Branch
               </button>
             </>
           )}
@@ -728,7 +728,7 @@ useEffect(() => {
              alignItems: "center",
              marginBottom: "20px"
           }}>
-            <h3 style={{margin: 0}}>Yeni Ürün Tanımla</h3>
+            <h3 style={{margin: 0}}>Add New Product</h3>
             <button
               onClick={() => {
                setMode("search")
@@ -744,14 +744,14 @@ useEffect(() => {
              cursor: "pointer"
            }}
       >
-        İptal
+        Cancel
       </button>
     </div>
 
     {/* Kategori seçimi */}
     <div style={{marginBottom: "20px"}}>
       <label style={{display: "block", marginBottom: "8px", fontWeight: "600"}}>
-        Kategori
+        Category
       </label>
       <div style={{display: "flex", gap: "20px"}}>
         <label style={{cursor: "pointer"}}>
@@ -788,11 +788,11 @@ useEffect(() => {
     {/* Ürün adı */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Ürün adı *
+        Product Name *
       </label>
       <input
         type="text"
-        placeholder="Örn: "
+        placeholder="e.g., "
         value={newProductName}
         onChange={(e) => setNewProductName(e.target.value)}
         style={inputStyle}
@@ -807,7 +807,7 @@ useEffect(() => {
       <input
         type="text"
         list="brands-list"
-        placeholder="Mevcut markadan seç veya yeni yaz"
+        placeholder="Select from existing brands or enter a new one"
         value={newBrandName}
         onChange={(e) => setNewBrandName(e.target.value)}
         style={inputStyle}
@@ -820,7 +820,7 @@ useEffect(() => {
     {/* Görsel URL */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Görsel URL (opsiyonel)
+        Image URL (optional)
       </label>
       <input
         type="text"
@@ -834,14 +834,14 @@ useEffect(() => {
     {/* Snack tipi */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Snack tipi
+        Snack Type
       </label>
       <select
         value={snacksType}
         onChange={(e) => setSnacksType(e.target.value)}
         style={inputStyle}
       >
-        <option value="">Seçiniz...</option>
+        <option value="">Select...</option>
         {snackTypesList.map(t => <option key={t} value={t}>{t}</option>)}
       </select>
     </div>
@@ -856,7 +856,7 @@ useEffect(() => {
         onChange={(e) => setPackaging(e.target.value)}
         style={inputStyle}
       >
-        <option value="">Seçiniz...</option>
+        <option value="">Select...</option>
         {packagingList.map(p => <option key={p} value={p}>{p}</option>)}
       </select>
     </div>
@@ -865,7 +865,7 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "15px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Kalori (kcal)
+          Calorie (kcal)
         </label>
         <input
           type="number"
@@ -888,7 +888,7 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Şeker (g)
+          Sugar (g)
         </label>
         <input
           type="number"
@@ -903,7 +903,7 @@ useEffect(() => {
     {/* Allerjenler (multi-checkbox) */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Allerjenler
+        Allergens
       </label>
       <div style={checkboxGridStyle}>
         {allergensList.map(a => (
@@ -954,7 +954,7 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "20px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Fiyat (₺) *
+          Price (₺) *
         </label>
         <input
           type="number"
@@ -966,7 +966,7 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Stok adedi *
+          Stock Quantity *
         </label>
         <input
           type="number"
@@ -993,7 +993,7 @@ useEffect(() => {
         width: "100%"
       }}
     >
-      {isSubmitting ? "Ekleniyor..." : "Ürünü Ekle"}
+      {isSubmitting ? "Adding..." : "Add Product"}
     </button>
   </>
 )}
@@ -1004,11 +1004,11 @@ useEffect(() => {
     {/* Ürün adı */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Ürün adı *
+        Product Name *
       </label>
       <input
         type="text"
-        placeholder="Örn: "
+        placeholder="e.g., "
         value={newProductName}
         onChange={(e) => setNewProductName(e.target.value)}
         style={inputStyle}
@@ -1018,12 +1018,12 @@ useEffect(() => {
     {/* Marka (combobox) — beverage-brands kullanıyor */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Marka *
+        Brand *
       </label>
       <input
         type="text"
         list="beverage-brands-list"
-        placeholder="Mevcut markadan seç veya yeni yaz"
+        placeholder="Select from existing brands or enter a new one"
         value={newBrandName}
         onChange={(e) => setNewBrandName(e.target.value)}
         style={inputStyle}
@@ -1036,7 +1036,7 @@ useEffect(() => {
     {/* Görsel URL */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Görsel URL (opsiyonel)
+        Image URL (optional)
       </label>
       <input
         type="text"
@@ -1050,12 +1050,12 @@ useEffect(() => {
     {/* Beverage tipi (combobox — yeni tip de yazılabilsin) */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        İçecek tipi
+        Beverage Type
       </label>
       <input
         type="text"
         list="beverage-types-list"
-        placeholder="Mevcut tipten seç veya yeni yaz"
+        placeholder="Select from existing types or enter a new one"
         value={beverageType}
         onChange={(e) => setBeverageType(e.target.value)}
         style={inputStyle}
@@ -1069,7 +1069,7 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "15px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Kalori (kcal)
+          Calorie (kcal)
         </label>
         <input
           type="number"
@@ -1080,7 +1080,7 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Şeker (g)
+          Sugar (g)
         </label>
         <input
           type="number"
@@ -1108,12 +1108,12 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "15px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Hacim (litre)
+          Volume (L)
         </label>
         <input
           type="number"
           step="0.01"
-          placeholder="Örn: 0.5, 1.0, 2.0"
+          placeholder="e.g., 0.5, 1.0, 2.0"
           value={volume}
           onChange={(e) => setVolume(e.target.value)}
           style={inputStyle}
@@ -1121,11 +1121,11 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Packaging (adet)
+          Packaging (units)
         </label>
         <input
           type="number"
-          placeholder="1=Single, 6=6'lı..."
+          placeholder="e.g., 1=Single, 6=6-pack"
           value={bevPackaging}
           onChange={(e) => setBevPackaging(e.target.value)}
           style={inputStyle}
@@ -1191,7 +1191,7 @@ useEffect(() => {
           checked={isLocallyProduced}
           onChange={(e) => setIsLocallyProduced(e.target.checked)}
         />
-        {" "}Yerli üretim
+        {" "} Locally Produced
       </label>
     </div>
 
@@ -1199,7 +1199,7 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "20px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Fiyat (₺) *
+          Price (₺) *
         </label>
         <input
           type="number"
@@ -1211,7 +1211,7 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Stok adedi *
+          Stock Quantity *
         </label>
         <input
           type="number"
@@ -1238,7 +1238,7 @@ useEffect(() => {
         width: "100%"
       }}
     >
-      {isSubmitting ? "Ekleniyor..." : "Ürünü Ekle"}
+      {isSubmitting ? "Adding..." : "Add Product"}
     </button>
   </>
 )}
@@ -1253,7 +1253,7 @@ useEffect(() => {
       </label>
       <input
         type="text"
-        placeholder="Örn: Soft Face Cream, Vitamin C Serum..."
+        placeholder="e.g., Soft Face Cream, Vitamin C Serum..."
         value={newProductName}
         onChange={(e) => setNewProductName(e.target.value)}
         style={inputStyle}
@@ -1268,7 +1268,7 @@ useEffect(() => {
       <input
         type="text"
         list="pc-brands-list"
-        placeholder="Mevcut markadan seç veya yeni yaz"
+        placeholder="Select from existing brands or enter a new one"
         value={newBrandName}
         onChange={(e) => setNewBrandName(e.target.value)}
         style={inputStyle}
@@ -1278,10 +1278,10 @@ useEffect(() => {
       </datalist>
     </div>
 
-    {/* Görsel URL */}
+    {/* Image URL */}
     <div style={{marginBottom: "15px"}}>
       <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-        Görsel URL (opsiyonel)
+        Image URL (optional)
       </label>
       <input
         type="text"
@@ -1306,7 +1306,7 @@ useEffect(() => {
         }}
         style={inputStyle}
       >
-        <option value="">Seçiniz...</option>
+        <option value="">Select...</option>
         {pcCosmeticsTypesList.map(t => <option key={t} value={t}>{t}</option>)}
       </select>
     </div>
@@ -1323,7 +1323,7 @@ useEffect(() => {
         disabled={!pcCosmeticsType}
       >
         <option value="">
-          {pcCosmeticsType ? "Seçiniz..." : "Önce Cosmetics Type seçin"}
+          {pcCosmeticsType ? "Select..." : "First select Cosmetics Type"}
         </option>
         {pcSubtypesList
           .filter(s => !pcCosmeticsType || s.cosmetics_type === pcCosmeticsType)
@@ -1436,12 +1436,12 @@ useEffect(() => {
     <div style={{display: "flex", gap: "10px", marginBottom: "15px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          SPF (Sun Care için)
+          SPF (Sun Protection Factor)
         </label>
         <input
           type="text"
           list="pc-spf-list"
-          placeholder="Örn: SPF 30, SPF 50+"
+          placeholder="e.g., SPF 30, SPF 50+"
           value={pcSpf}
           onChange={(e) => setPcSpf(e.target.value)}
           style={inputStyle}
@@ -1459,7 +1459,7 @@ useEffect(() => {
           onChange={(e) => setPcProductForm(e.target.value)}
           style={inputStyle}
         >
-          <option value="">Seçiniz...</option>
+          <option value="">Select...</option>
           {pcProductFormsList.map(pf => <option key={pf} value={pf}>{pf}</option>)}
         </select>
       </div>
@@ -1473,7 +1473,7 @@ useEffect(() => {
         </label>
         <input
           type="number"
-          placeholder="Örn: 100, 200, 500"
+          placeholder="e.g., 100, 200, 500"
           value={pcVolumeMl}
           onChange={(e) => setPcVolumeMl(e.target.value)}
           style={inputStyle}
@@ -1486,16 +1486,16 @@ useEffect(() => {
             checked={isLocallyProduced}
             onChange={(e) => setIsLocallyProduced(e.target.checked)}
           />
-          {" "}Yerli üretim
+          {" "}Locally Produced
         </label>
       </div>
     </div>
 
-    {/* Fiyat ve Stok */}
+    {/* Price and Stock */}
     <div style={{display: "flex", gap: "10px", marginBottom: "20px"}}>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Fiyat (₺) *
+          Price (₺) *
         </label>
         <input
           type="number"
@@ -1507,7 +1507,7 @@ useEffect(() => {
       </div>
       <div style={{flex: 1}}>
         <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
-          Stok adedi *
+          Stock Quantity *
         </label>
         <input
           type="number"
@@ -1534,7 +1534,7 @@ useEffect(() => {
         width: "100%"
       }}
     >
-      {isSubmitting ? "Ekleniyor..." : "Ürünü Ekle"}
+      {isSubmitting ? "Adding..." : "Add Product"}
     </button>
   </>
 )}

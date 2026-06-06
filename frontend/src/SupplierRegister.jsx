@@ -17,7 +17,7 @@ function SupplierRegister() {
   // Kayıt işlemi — API'a şirket adı, email ve şifre 
   const handleRegister = async () => {
     if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı")
+      setError("Password must be at least 8 characters long")
       return
     }
 
@@ -28,7 +28,7 @@ function SupplierRegister() {
     })
 
     if (res.ok) {
-      setSuccess("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...")
+      setSuccess("Registration successful! You are being redirected to the login page...")
       setTimeout(() => navigate("/supplier/login"), 2000)
     } else {
       const data = await res.json()
@@ -74,7 +74,7 @@ useEffect(() => {
           <button className="login-btn" onClick={handleRegister}>SIGN UP</button>
 
           <p className="login-signup-link">
-            Hesabın var mı? <span onClick={() => navigate("/supplier/login")}>Login</span>
+            Do you have an account? <span onClick={() => navigate("/supplier/login")}>Login</span>
           </p>
 
         </div>

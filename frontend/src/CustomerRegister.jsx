@@ -18,7 +18,7 @@ function CustomerRegister() {
   // Kayıt işlemi — API'a kullanıcı adı, email ve şifre gönderir
   const handleRegister = async () => {
     if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı")
+      setError("Password must be at least 8 characters long")
       return
     }
 
@@ -29,7 +29,7 @@ function CustomerRegister() {
     })
 
     if (res.ok) {
-      setSuccess("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...")
+      setSuccess("Registration successful! You are being redirected to the login page...")
       setTimeout(() => navigate("/customer/login"), 2000)
     } else {
       const data = await res.json()
@@ -56,11 +56,11 @@ useEffect(() => {
 
         <div className="login-form">
 
-          <label>AD</label>
+          <label>FIRST NAME</label>
           <input type="text" value={firstName}
             onChange={(e) => setFirstName(e.target.value)} />
 
-          <label>SOYAD</label>
+          <label>LAST NAME</label>
           <input type="text" value={lastName}
             onChange={(e) => setLastName(e.target.value)} />
 
@@ -79,7 +79,7 @@ useEffect(() => {
           <button className="login-btn" onClick={handleRegister}>SIGN UP</button>
 
           <p className="login-signup-link">
-            Hesabın var mı? <span onClick={() => navigate("/customer/login")}>Login</span>
+            Do you have an account? <span onClick={() => navigate("/customer/login")}>Login</span>
           </p>
 
         </div>

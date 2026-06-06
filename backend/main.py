@@ -39,7 +39,7 @@ def get_snacks():
             SELECT
                 p.id, p.name, b.name AS brand, bp.price, bp.stock_quantity,
                 br.name AS branch, sd.snacks_type, sd.energy_kcal,
-                sd.protein_g, sd.sugar_g, sd.allergens
+                sd.protein_g, sd.sugar_g, sd.allergens, p.image_url
             FROM products p
             JOIN brands b ON p.brand_id = b.id
             JOIN branch_products bp ON p.id = bp.product_id
@@ -58,7 +58,7 @@ def get_snacks():
         "price": float(row[3]), "stock": row[4], "branch": row[5],
         "type": row[6], "energy_kcal": row[7],
         "protein_g": float(row[8]), "sugar_g": float(row[9]),
-        "allergens": row[10]
+        "allergens": row[10], "image_url": row[11]
     } for row in rows], media_type="application/json; charset=utf-8")
 
 
@@ -484,13 +484,13 @@ def supplier_login(data: SupplierLogin):
         conn.close()
 
     if not supplier:
-        raise HTTPException(status_code=401, detail="Email bulunamadı")
+        raise HTTPException(status_code=401, detail="Email not found")
 
     if supplier[2] != data.password:
-        raise HTTPException(status_code=401, detail="Şifre yanlış")
+        raise HTTPException(status_code=401, detail="Invalid password")
 
     return {
-        "message": "Giriş başarılı",
+        "message": "Login successful",
         "supplier_id": supplier[0],
         "company_name": supplier[1]
     }
@@ -512,7 +512,7 @@ def supplier_register(data: SupplierRegister):
         existing = cursor.fetchone()
 
         if existing:
-            raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
+            raise HTTPException(status_code=400, detail="This email is already registered")
 
         cursor.execute(
             "INSERT INTO suppliers (company_name, email, password) VALUES (%s, %s, %s) RETURNING id",
@@ -525,7 +525,7 @@ def supplier_register(data: SupplierRegister):
         conn.close()
 
     return {
-        "message": "Kayıt başarılı",
+        "message": "Registration successful",
         "supplier_id": new_id,
         "company_name": data.company_name
     }
@@ -608,16 +608,16 @@ def customer_login(data: CustomerLogin):
         conn.close()
 
     if not customer:
-        raise HTTPException(status_code=401, detail="Email bulunamadı")
+        raise HTTPException(status_code=401, detail="Email not found")
     
     if customer[1] != data.username:
-        raise HTTPException(status_code=401, detail="Ad soyad yanlış")
+        raise HTTPException(status_code=401, detail="Invalid name or surname")
 
     if customer[2] != data.password:
-        raise HTTPException(status_code=401, detail="Şifre yanlış")
+        raise HTTPException(status_code=401, detail="Invalid password")
 
     return {
-        "message": "Giriş başarılı",
+        "message": "Login successful",
         "customer_id": customer[0],
         "username": customer[1]
     }
@@ -634,7 +634,7 @@ def customer_register(data: CustomerRegister):
         existing = cursor.fetchone()
 
         if existing:
-            raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
+            raise HTTPException(status_code=400, detail="This email is already registered")
         
         username = f"{data.first_name} {data.last_name}"
         cursor.execute(
@@ -648,7 +648,7 @@ def customer_register(data: CustomerRegister):
         conn.close()
 
     return {
-        "message": "Kayıt başarılı",
+        "message": "Registration successful",
         "customer_id": new_id,
         "username": username
     }
@@ -680,7 +680,7 @@ def update_supplier_product(
         if not result:
             raise HTTPException(
                 status_code=403,
-                detail="Bu ürünü düzenleme yetkiniz yok"
+                detail="You do not have permission to modify this product."
             )
 
         cursor.execute("""
@@ -695,7 +695,7 @@ def update_supplier_product(
         conn.close()
 
     return {
-        "message": "Ürün güncellendi",
+        "message": "Product updated successfully",
         "id": branch_product_id,
         "price": data.price,
         "stock_quantity": data.stock_quantity
@@ -718,7 +718,7 @@ def delete_supplier_product(supplier_id: int, branch_product_id: int):
         if not result:
             raise HTTPException(
                 status_code=403,
-                detail="Bu ürünü silme yetkiniz yok"
+                detail="You do not have permission to delete this product."
             )
 
         cursor.execute(
@@ -731,7 +731,7 @@ def delete_supplier_product(supplier_id: int, branch_product_id: int):
         conn.close()
 
     return {
-        "message": "Ürün şubeden kaldırıldı",
+        "message": "Product removed from branch",
         "id": branch_product_id
     }
 
@@ -789,7 +789,7 @@ def add_product_to_branch(
         if not cursor.fetchone():
             raise HTTPException(
                 status_code=403,
-                detail="Bu şubeye ürün ekleme yetkiniz yok"
+                detail="You do not have permission to add products to this branch"
             )
 
 
@@ -797,7 +797,7 @@ def add_product_to_branch(
         if not cursor.fetchone():
             raise HTTPException(
                 status_code=404,
-                detail="Ürün sistemde bulunamadı"
+                detail="Product not found in the system"
             )
 
 
@@ -809,7 +809,7 @@ def add_product_to_branch(
         if existing:
             raise HTTPException(
                 status_code=400,
-                detail="Bu ürün zaten bu şubenizde mevcut. Düzenlemek için 'My Products' sayfasını kullanın."
+                detail="This product is already in your branch. Use the 'My Products' page to edit it."
             )
 
         # Ekle
@@ -826,7 +826,7 @@ def add_product_to_branch(
         conn.close()
 
     return {
-        "message": "Ürün şubenize eklendi",
+        "message": "Product added to branch",
         "id": new_id,
         "branch_id": branch_id,
         "product_id": data.product_id,
@@ -842,7 +842,7 @@ def create_or_get_brand(payload: dict = Body(...)):
     
 
     if not name:
-        raise HTTPException(status_code=400, detail="Marka adı boş olamaz")
+        raise HTTPException(status_code=400, detail="Brand name cannot be empty")
     
     conn = get_connection()
     cursor = conn.cursor()
@@ -894,7 +894,7 @@ def add_new_snack_product(
     stock_quantity = payload.get("stock_quantity")
 
     if not name or not brand_id or price is None or stock_quantity is None:
-        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+        raise HTTPException(status_code=400, detail="Missing required fields")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -906,9 +906,9 @@ def add_new_snack_product(
         )
         row = cursor.fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+            raise HTTPException(status_code=404, detail="Branch not found")
         if row[0] != supplier_id:
-            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+            raise HTTPException(status_code=403, detail="This branch does not belong to you")
 
         cursor.execute(
             """
@@ -944,7 +944,7 @@ def add_new_snack_product(
         return {
             "success": True,
             "product_id": product_id,
-            "message": f"'{name}' başarıyla eklendi"
+            "message": f"'{name}' has been successfully added"
         }
 
     except HTTPException:
@@ -952,7 +952,7 @@ def add_new_snack_product(
         raise
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         cursor.close()
         conn.close()
@@ -983,7 +983,7 @@ def add_new_beverage_product(
 
 
     if not name or not brand_id or price is None or stock_quantity is None:
-        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+        raise HTTPException(status_code=400, detail="Missing required fields")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -995,9 +995,9 @@ def add_new_beverage_product(
         )
         row = cursor.fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+            raise HTTPException(status_code=404, detail="Branch not found")
         if row[0] != supplier_id:
-            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+            raise HTTPException(status_code=403, detail="This branch does not belong to you")
 
         cursor.execute(
             """
@@ -1033,7 +1033,7 @@ def add_new_beverage_product(
         return {
             "success": True,
             "product_id": product_id,
-            "message": f"'{name}' başarıyla eklendi"
+            "message": f"'{name}' has been successfully added"
         }
 
     except HTTPException:
@@ -1041,7 +1041,7 @@ def add_new_beverage_product(
         raise
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         cursor.close()
         conn.close()
@@ -1465,9 +1465,9 @@ def add_new_personal_care_product(
 
     # Temel doğrulama
     if not name or not brand_id or price is None or stock_quantity is None:
-        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+        raise HTTPException(status_code=400, detail="Missing required fields")
     if not cosmetics_type or not product_subtype:
-        raise HTTPException(status_code=400, detail="Cosmetics Type ve Product Subtype zorunlu")
+        raise HTTPException(status_code=400, detail="Cosmetics Type and Product Subtype are required")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -1480,9 +1480,9 @@ def add_new_personal_care_product(
         )
         row = cursor.fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+            raise HTTPException(status_code=404, detail="Branch not found")
         if row[0] != supplier_id:
-            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+            raise HTTPException(status_code=403, detail="This branch does not belong to you")
 
         # 2. products tablosuna INSERT 
         cursor.execute(
@@ -1524,7 +1524,7 @@ def add_new_personal_care_product(
         return {
             "success": True,
             "product_id": product_id,
-            "message": f"'{name}' başarıyla eklendi"
+            "message": f"'{name}' has been successfully added"
         }
 
     except HTTPException:
@@ -1532,7 +1532,7 @@ def add_new_personal_care_product(
         raise
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         cursor.close()
         conn.close()

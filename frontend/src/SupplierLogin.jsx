@@ -25,7 +25,7 @@ function SupplierLogin() {
       localStorage.setItem("supplier", JSON.stringify(data))
       navigate("/supplier/dashboard")
     } else {
-      setError("Email veya şifre yanlış")
+      setError("Invalid email or password")
     }
   }
 
@@ -60,7 +60,7 @@ useEffect(() => {
           <button className="login-btn" onClick={handleLogin}>LOGIN</button>
 
           <p className="login-signup-link">
-            Hesabın yok mu? <span onClick={() => navigate("/supplier/register")}>Sign Up</span>
+            Don't have an account? <span onClick={() => navigate("/supplier/register")}>Sign Up</span>
           </p>
 
         </div>

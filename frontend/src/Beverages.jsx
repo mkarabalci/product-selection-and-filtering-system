@@ -227,8 +227,8 @@ useEffect(() => {
         {/* Ürün kartları */}
         {showResults && (
           <div className="product-grid">
-            {loading && <p className="info-text">Yükleniyor...</p>}
-            {!loading && products.length === 0 && <p className="info-text">Ürün bulunamadı.</p>}
+            {loading && <p className="info-text">Loading...</p>}
+            {!loading && products.length === 0 && <p className="info-text">No products found.</p>}
             {!loading && products.map((p, i) => (
               <div key={i} className="product-card">
                 {p.image_url && (

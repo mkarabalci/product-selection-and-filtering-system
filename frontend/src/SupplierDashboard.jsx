@@ -59,7 +59,7 @@ function SupplierDashboard() {
           <div className="dashboard-card">
             <h3>Total Products</h3>
             <p className="dashboard-number">{productCount}</p>
-            <p className="dashboard-sub">Şubelerinizdeki toplam ürün</p>
+            <p className="dashboard-sub">Total products in your branches</p>
           </div>
 
           <div className="dashboard-card">
@@ -93,7 +93,7 @@ function SupplierDashboard() {
               cursor: "pointer"
             }}
           >
-            📋 Ürünlerimi Görüntüle
+            📋 View My Products
           </button>
           <button
             onClick={() => navigate("/supplier/products/new")}
@@ -108,7 +108,7 @@ function SupplierDashboard() {
               cursor: "pointer"
             }}
           >
-            ➕ Yeni Ürün Ekle
+            ➕ Add New Product
           </button>
         </div>
 

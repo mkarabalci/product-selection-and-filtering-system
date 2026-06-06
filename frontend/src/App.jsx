@@ -10,6 +10,9 @@ import AddProduct from "./AddProduct"
 import CustomerLogin from "./CustomerLogin"
 import CustomerRegister from "./CustomerRegister"
 import Landing from "./Landing"
+import PreviewSnacks from "./PreviewSnacks"
+import PreviewBeverages from "./PreviewBeverages"
+import PreviewPersonalCare from "./PreviewPersonalCare"
 import PersonalCare from "./PersonalCare"
 
 function App() {
@@ -19,6 +22,9 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
         <Route path="/snacks" element={<Snacks />} />
+        <Route path="/preview/snacks" element={<PreviewSnacks />} />
+        <Route path="/preview/drinks" element={<PreviewBeverages />} />
+        <Route path="/preview/personal-care" element={<PreviewPersonalCare />} />
         <Route path="/drinks" element={<Beverages />} />
         <Route path="/personal-care" element={<PersonalCare />} /> 
         <Route path="/supplier/login" element={<SupplierLogin />} />

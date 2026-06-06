@@ -40,15 +40,15 @@ useEffect(() => {
       <div className="landing-categories">
         <h3>EXPLORE CATEGORIES</h3>
         <div className="landing-grid">
-          <div className="landing-card" onClick={() => navigate("/drinks")}>
+          <div className="landing-card" onClick={() => navigate("/preview/drinks")}>
             <p>Drinks</p>
             <span>🥤</span>
           </div>
-          <div className="landing-card" onClick={() => navigate("/snacks")}>
+          <div className="landing-card" onClick={() => navigate("/preview/snacks")}>
             <p>Snacks</p>
             <span>🍫</span>
           </div>
-          <div className="landing-card" onClick={() => navigate("/personal-care")}>
+          <div className="landing-card" onClick={() => navigate("/preview/personal-care")}>
             <p>Personal Care</p>
             <span>🧴</span>
           </div>

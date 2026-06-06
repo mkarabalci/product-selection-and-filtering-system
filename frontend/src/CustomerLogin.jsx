@@ -26,7 +26,7 @@ function CustomerLogin() {
       localStorage.setItem("customer", JSON.stringify(data))
       navigate("/home")
     } else {
-      setError("Email veya şifre yanlış")
+      setError("Email or password is incorrect")
     }
   }
 
@@ -57,7 +57,7 @@ useEffect(() => {
 
         <div className="login-form">
 
-          <label>AD SOYAD</label>
+          <label>FULL NAME</label>
           <input type="text" value={fullName}
             onChange={(e) => setFullName(e.target.value)} />
 
@@ -74,7 +74,7 @@ useEffect(() => {
           <button className="login-btn" onClick={handleLogin}>LOGIN</button>
 
           <p className="login-signup-link">
-            Hesabın yok mu? <span onClick={() => navigate("/customer/register")}>Sign Up</span>
+            Don't have an account? <span onClick={() => navigate("/customer/register")}>Sign Up</span>
           </p>
 
         </div>

@@ -16,7 +16,7 @@ function Sidebar() {
       <nav>
         <a href="#">Profile</a>
         <a href="#">Help</a>
-        <a href="#">Çıkış yap</a>
+        <a href="#">Logout</a>
       </nav>
 
     </aside>

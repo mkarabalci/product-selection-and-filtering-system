@@ -5,6 +5,7 @@ import Beverages from "./Beverages"
 import SupplierLogin from "./SupplierLogin"
 import SupplierRegister from "./SupplierRegister"
 import SupplierDashboard from "./SupplierDashboard"
+import BranchDetail from "./BranchDetail"
 import MyProducts from "./MyProducts"
 import AddProduct from "./AddProduct"
 import CustomerLogin from "./CustomerLogin"
@@ -30,6 +31,7 @@ function App() {
         <Route path="/supplier/login" element={<SupplierLogin />} />
         <Route path="/supplier/register" element={<SupplierRegister />} />
         <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+        <Route path="/supplier/branches/:branchId" element={<BranchDetail />} />
         <Route path="/supplier/products" element={<MyProducts />} />
         <Route path="/supplier/products/new" element={<AddProduct />} />
         <Route path="/customer/login" element={<CustomerLogin />} />

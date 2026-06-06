@@ -116,10 +116,19 @@ function MyProducts() {
   const branchOptions = [...new Set(products.map(p => p.branch))].sort()
 
   
+  // Helper function: assigns stock priority for sorting
+  // 0: out of stock, 1: low stock, 2: normal stock
+  const getStockPriority = (stock) => {
+    if (stock === 0) return 0       // highest priority — top
+    if (stock <= 40) return 1       // medium priority — middle
+    return 2                         // lowest priority — bottom
+  }
+
+  // Two-stage filtering + three-tier sorting
   const filteredProducts = products
     // 1) Branch filter
     .filter(p => {
-      if (!selectedBranch) return true  
+      if (!selectedBranch) return true
       return p.branch === selectedBranch
     })
     // 2) Search filter (product name OR category)
@@ -130,6 +139,13 @@ function MyProducts() {
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q)
       )
+    })
+    // 3) Sort by stock urgency: out-of-stock → low-stock → normal
+    .sort((a, b) => {
+      const priorityDiff = getStockPriority(a.stock) - getStockPriority(b.stock)
+      if (priorityDiff !== 0) return priorityDiff
+      // If same priority, sort alphabetically by product name
+      return a.name.localeCompare(b.name)
     })
 
   return (
@@ -271,9 +287,17 @@ function MyProducts() {
                           onChange={(e) => setEditStock(e.target.value)}
                           style={{ width: "70px", padding: "4px" }}
                         />
-                      ) : (
-                        p.stock
-                      )}
+                        ) : p.stock === 0 ? (
+                          <span style={{color: "#c62828", fontWeight: "600"}}>
+                            ❌ Out of Stock
+                          </span>
+                        ) : p.stock <= 40 ? (
+                          <span style={{ color: "#c62828", fontWeight: "600" }}>
+                            ⚠️ {p.stock}
+                          </span>
+                        ) : (
+                          <span>{p.stock}</span>
+                        )}
                     </td>
 
                     {/* Market */}

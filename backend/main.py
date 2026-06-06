@@ -1536,3 +1536,119 @@ def add_new_personal_care_product(
     finally:
         cursor.close()
         conn.close()
+
+
+# Dashboard istatistikleri
+
+@app.get("/supplier/{supplier_id}/dashboard-stats")
+def get_supplier_dashboard_stats(supplier_id: int):
+    # Tedarikçinin tüm şubelerindeki toplam ürün durumunu özetler
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                COUNT(*) AS total_products,
+                COUNT(*) FILTER (WHERE bp.stock_quantity = 0) AS out_of_stock,
+                COUNT(*) FILTER (WHERE bp.stock_quantity BETWEEN 1 AND 40) AS low_stock
+            FROM branch_products bp
+            JOIN branches br ON bp.branch_id = br.id
+            WHERE br.supplier_id = %s
+        """, (supplier_id,))
+        row = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "total_products": row[0],
+        "out_of_stock": row[1],
+        "low_stock": row[2]
+    }
+
+
+# BranchDetails sayfası için veri
+
+@app.get("/supplier/{supplier_id}/branches/{branch_id}/details")
+def get_branch_details(supplier_id: int, branch_id: int):
+    # Bir şubenin tüm detaylarını tek istekte getirir
+    # 1) Şube bilgisi
+    # 2) Şubeye özel istatistikler
+    # 3) Şubedeki ürün listesi
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, name, address, latitude, longitude
+            FROM branches
+            WHERE id = %s AND supplier_id = %s
+        """, (branch_id, supplier_id))
+        branch_row = cursor.fetchone()
+        
+        if not branch_row:
+            raise HTTPException(status_code=404, detail="Branch not found or doesn't belong to you")
+
+        branch = {
+            "id": branch_row[0],
+            "name": branch_row[1],
+            "address": branch_row[2],
+            "latitude": float(branch_row[3]) if branch_row[3] else None,
+            "longitude": float(branch_row[4]) if branch_row[4] else None
+        }
+
+        # 2) Bu şube için istatistikler
+        cursor.execute("""
+            SELECT
+                COUNT(*) AS total_products,
+                COUNT(*) FILTER (WHERE stock_quantity = 0) AS out_of_stock,
+                COUNT(*) FILTER (WHERE stock_quantity BETWEEN 1 AND 40) AS low_stock,
+                COALESCE(SUM(price * stock_quantity), 0) AS total_inventory_value
+            FROM branch_products
+            WHERE branch_id = %s
+        """, (branch_id,))
+        stats_row = cursor.fetchone()
+        
+        stats = {
+            "total_products": stats_row[0],
+            "out_of_stock": stats_row[1],
+            "low_stock": stats_row[2],
+            "total_inventory_value": float(stats_row[3])
+        }
+
+        # 3) Şubedeki ürünler
+        cursor.execute("""
+            SELECT 
+                bp.id, p.name, c.name AS category, 
+                bp.price, bp.stock_quantity, p.image_url
+            FROM branch_products bp
+            JOIN products p ON bp.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE bp.branch_id = %s
+            ORDER BY 
+                CASE 
+                    WHEN bp.stock_quantity = 0 THEN 0
+                    WHEN bp.stock_quantity <= 40 THEN 1
+                    ELSE 2
+                END,
+                p.name
+        """, (branch_id,))
+        product_rows = cursor.fetchall()
+        
+        products = [{
+            "id": r[0],
+            "name": r[1],
+            "category": r[2],
+            "price": float(r[3]),
+            "stock": r[4],
+            "image_url": r[5]
+        } for r in product_rows]
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "branch": branch,
+        "stats": stats,
+        "products": products
+    }

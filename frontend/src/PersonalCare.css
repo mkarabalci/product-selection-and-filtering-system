@@ -1,0 +1,38 @@
+/* Personal Care özel filtre düzeni: 5x2 grid */
+.pc-filter-section {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.pc-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);  /* 5 sütun = üst satır 5 kart */
+  gap: 16px;
+}
+
+/* Filter actions (Apply + Reset) tek hücre — 5x2 grid'de uygun yere otursun */
+.pc-filter-grid .filter-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Küçük ekranlarda 2 sütuna düşür (responsive) */
+@media (max-width: 1200px) {
+  .pc-filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pc-filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Filtre kartları çok uzun olduğunda scroll'lansın */
+.pc-filter-grid .filter-card {
+  max-height: 280px;
+  overflow-y: auto;
+}

@@ -67,6 +67,28 @@ function AddProduct() {
   const [beverageTypesList, setBeverageTypesList] = useState([])
   const [packageTypesList, setPackageTypesList] = useState([])
 
+    // Personal Care'e özel state'ler
+  const [pcCosmeticsType, setPcCosmeticsType] = useState("")
+  const [pcProductSubtype, setPcProductSubtype] = useState("")
+  const [pcSelectedSkinTypes, setPcSelectedSkinTypes] = useState([])
+  const [pcSelectedTargets, setPcSelectedTargets] = useState([])
+  const [pcSelectedIngredients, setPcSelectedIngredients] = useState([])
+  const [pcSelectedAllergens, setPcSelectedAllergens] = useState([])
+  const [pcSpf, setPcSpf] = useState("")
+  const [pcProductForm, setPcProductForm] = useState("")
+  const [pcVolumeMl, setPcVolumeMl] = useState("")
+
+  // Personal Care dropdown verileri
+  const [pcCosmeticsTypesList, setPcCosmeticsTypesList] = useState([])
+  const [pcSubtypesList, setPcSubtypesList] = useState([])           // tüm subtype'lar
+  const [pcSkinTypesList, setPcSkinTypesList] = useState([])
+  const [pcTargetsList, setPcTargetsList] = useState([])
+  const [pcIngredientsList, setPcIngredientsList] = useState([])
+  const [pcAllergensList, setPcAllergensList] = useState([])
+  const [pcSpfList, setPcSpfList] = useState([])
+  const [pcProductFormsList, setPcProductFormsList] = useState([])
+  const [pcBrandsList, setPcBrandsList] = useState([])
+
   // Submit sırasındaki loading durumu
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -117,6 +139,42 @@ function AddProduct() {
    fetch("http://127.0.0.1:8000/package-types")
     .then(r => r.json())
     .then(setPackageTypesList)
+
+    fetch("http://127.0.0.1:8000/personal-care-types")
+    .then(r => r.json())
+    .then(setPcCosmeticsTypesList)
+
+   fetch("http://127.0.0.1:8000/personal-care-subtypes")
+    .then(r => r.json())
+    .then(setPcSubtypesList)
+
+   fetch("http://127.0.0.1:8000/personal-care-skin-types")
+    .then(r => r.json())
+    .then(setPcSkinTypesList)
+
+   fetch("http://127.0.0.1:8000/personal-care-targets")
+    .then(r => r.json())
+    .then(setPcTargetsList)
+
+   fetch("http://127.0.0.1:8000/personal-care-ingredients")
+    .then(r => r.json())
+    .then(setPcIngredientsList)
+
+   fetch("http://127.0.0.1:8000/personal-care-allergens")
+    .then(r => r.json())
+    .then(setPcAllergensList)
+
+   fetch("http://127.0.0.1:8000/personal-care-spf")
+    .then(r => r.json())
+    .then(setPcSpfList)
+
+   fetch("http://127.0.0.1:8000/personal-care-product-forms")
+    .then(r => r.json())
+    .then(setPcProductFormsList)
+
+   fetch("http://127.0.0.1:8000/personal-care-brands")
+    .then(r => r.json())
+    .then(setPcBrandsList)
   }, [])
 
   // Arama kutusuna yazıldığında otomatik arama yapar 
@@ -260,6 +318,7 @@ const handleCreateNewProduct = async () => {
     const brandData = await brandResp.json()
     const brandId = brandData.id
 
+// Kategoriye göre endpoint ve body'yi belirle
 let endpoint, body
 if (category === "snack") {
   endpoint = `http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches/${selectedBranchId}/snacks`
@@ -277,7 +336,7 @@ if (category === "snack") {
     price: priceNum,
     stock_quantity: stockNum
   }
-} else {
+} else if (category === "beverage") {
   endpoint = `http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches/${selectedBranchId}/beverages`
   body = {
     name: newProductName.trim(),
@@ -291,6 +350,26 @@ if (category === "snack") {
     packaging: bevPackaging ? parseInt(bevPackaging) : null,
     package_type: selectedPackageTypes,
     allergens: selectedAllergens,
+    is_locally_produced: isLocallyProduced,
+    price: priceNum,
+    stock_quantity: stockNum
+  }
+} else {
+  // personal care
+  endpoint = `http://127.0.0.1:8000/supplier/${supplier.supplier_id}/branches/${selectedBranchId}/personal-care`
+  body = {
+    name: newProductName.trim(),
+    brand_id: brandId,
+    image_url: newImageUrl.trim() || null,
+    cosmetics_type: pcCosmeticsType || null,
+    product_subtype: pcProductSubtype || null,
+    skin_type: pcSelectedSkinTypes,
+    targets: pcSelectedTargets,
+    active_ingredients: pcSelectedIngredients,
+    allergens: pcSelectedAllergens,
+    spf: pcSpf || null,
+    product_form: pcProductForm || null,
+    volume_ml: pcVolumeMl ? parseInt(pcVolumeMl) : null,
     is_locally_produced: isLocallyProduced,
     price: priceNum,
     stock_quantity: stockNum
@@ -336,6 +415,15 @@ const productResp = await fetch(endpoint, {
     setBevPackaging("")
     setSelectedPackageTypes([])
     setIsLocallyProduced(false)
+    setPcCosmeticsType("")
+    setPcProductSubtype("")
+    setPcSelectedSkinTypes([])
+    setPcSelectedTargets([])
+    setPcSelectedIngredients([])
+    setPcSelectedAllergens([])
+    setPcSpf("")
+    setPcProductForm("")
+    setPcVolumeMl("")
   } catch (err) {
     setErrorMessage("Sunucuya bağlanılamadı")
   } finally {
@@ -686,6 +774,11 @@ useEffect(() => {
           />
           {" "}Beverage
         </label>
+        <label style={{cursor: "pointer"}}>
+          <input type="radio" name="category" value="personalcare"
+            checked={category === "personalcare"} onChange={(e) => setCategory(e.target.value)} />
+            {" "}Personal Care
+        </label>
       </div>
     </div>
 
@@ -699,7 +792,7 @@ useEffect(() => {
       </label>
       <input
         type="text"
-        placeholder="Örn: Eti Cin Limonlu"
+        placeholder="Örn: "
         value={newProductName}
         onChange={(e) => setNewProductName(e.target.value)}
         style={inputStyle}
@@ -915,7 +1008,7 @@ useEffect(() => {
       </label>
       <input
         type="text"
-        placeholder="Örn: Pınar Su 1L"
+        placeholder="Örn: "
         value={newProductName}
         onChange={(e) => setNewProductName(e.target.value)}
         style={inputStyle}
@@ -1100,6 +1193,302 @@ useEffect(() => {
         />
         {" "}Yerli üretim
       </label>
+    </div>
+
+    {/* Fiyat ve Stok */}
+    <div style={{display: "flex", gap: "10px", marginBottom: "20px"}}>
+      <div style={{flex: 1}}>
+        <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+          Fiyat (₺) *
+        </label>
+        <input
+          type="number"
+          step="0.01"
+          value={newPrice}
+          onChange={(e) => setNewPrice(e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+      <div style={{flex: 1}}>
+        <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+          Stok adedi *
+        </label>
+        <input
+          type="number"
+          value={newStock}
+          onChange={(e) => setNewStock(e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+    </div>
+
+    {/* Submit butonu */}
+    <button
+      onClick={handleCreateNewProduct}
+      disabled={isSubmitting}
+      style={{
+        padding: "12px 24px",
+        backgroundColor: isSubmitting ? "#9e9e9e" : "#4caf50",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        fontSize: "15px",
+        fontWeight: "600",
+        cursor: isSubmitting ? "not-allowed" : "pointer",
+        width: "100%"
+      }}
+    >
+      {isSubmitting ? "Ekleniyor..." : "Ürünü Ekle"}
+    </button>
+  </>
+)}
+
+{/* Personal Care formu */}
+{category === "personalcare" && (
+  <>
+    {/* Ürün adı */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Ürün adı *
+      </label>
+      <input
+        type="text"
+        placeholder="Örn: Soft Face Cream, Vitamin C Serum..."
+        value={newProductName}
+        onChange={(e) => setNewProductName(e.target.value)}
+        style={inputStyle}
+      />
+    </div>
+
+    {/* Marka (combobox) — personal-care-brands kullanıyor */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Marka *
+      </label>
+      <input
+        type="text"
+        list="pc-brands-list"
+        placeholder="Mevcut markadan seç veya yeni yaz"
+        value={newBrandName}
+        onChange={(e) => setNewBrandName(e.target.value)}
+        style={inputStyle}
+      />
+      <datalist id="pc-brands-list">
+        {pcBrandsList.map(b => <option key={b} value={b} />)}
+      </datalist>
+    </div>
+
+    {/* Görsel URL */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Görsel URL (opsiyonel)
+      </label>
+      <input
+        type="text"
+        placeholder="https://..."
+        value={newImageUrl}
+        onChange={(e) => setNewImageUrl(e.target.value)}
+        style={inputStyle}
+      />
+    </div>
+
+    {/* Cosmetics Type */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Cosmetics Type *
+      </label>
+      <select
+        value={pcCosmeticsType}
+        onChange={(e) => {
+          setPcCosmeticsType(e.target.value)
+          // Üst kategori değişince subtype'ı sıfırla
+          setPcProductSubtype("")
+        }}
+        style={inputStyle}
+      >
+        <option value="">Seçiniz...</option>
+        {pcCosmeticsTypesList.map(t => <option key={t} value={t}>{t}</option>)}
+      </select>
+    </div>
+
+    {/* Product Subtype (DİNAMİK — sadece seçili cosmetics_type'a uygun olanları göster) */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Product Subtype *
+      </label>
+      <select
+        value={pcProductSubtype}
+        onChange={(e) => setPcProductSubtype(e.target.value)}
+        style={inputStyle}
+        disabled={!pcCosmeticsType}
+      >
+        <option value="">
+          {pcCosmeticsType ? "Seçiniz..." : "Önce Cosmetics Type seçin"}
+        </option>
+        {pcSubtypesList
+          .filter(s => !pcCosmeticsType || s.cosmetics_type === pcCosmeticsType)
+          .map(s => <option key={s.subtype} value={s.subtype}>{s.subtype}</option>)
+        }
+      </select>
+    </div>
+
+    {/* Skin Type (multi-checkbox) */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Skin Type
+      </label>
+      <div style={checkboxGridStyle}>
+        {pcSkinTypesList.map(st => (
+          <label key={st} style={{cursor: "pointer", fontSize: "14px"}}>
+            <input
+              type="checkbox"
+              checked={pcSelectedSkinTypes.includes(st)}
+              onChange={() => {
+                setPcSelectedSkinTypes(
+                  pcSelectedSkinTypes.includes(st)
+                    ? pcSelectedSkinTypes.filter(x => x !== st)
+                    : [...pcSelectedSkinTypes, st]
+                )
+              }}
+            />
+            {" "}{st}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* Targets (multi-checkbox) */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Targets
+      </label>
+      <div style={checkboxGridStyle}>
+        {pcTargetsList.map(t => (
+          <label key={t} style={{cursor: "pointer", fontSize: "14px"}}>
+            <input
+              type="checkbox"
+              checked={pcSelectedTargets.includes(t)}
+              onChange={() => {
+                setPcSelectedTargets(
+                  pcSelectedTargets.includes(t)
+                    ? pcSelectedTargets.filter(x => x !== t)
+                    : [...pcSelectedTargets, t]
+                )
+              }}
+            />
+            {" "}{t}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* Active Ingredients (multi-checkbox) */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Active Ingredients
+      </label>
+      <div style={checkboxGridStyle}>
+        {pcIngredientsList.map(i => (
+          <label key={i} style={{cursor: "pointer", fontSize: "14px"}}>
+            <input
+              type="checkbox"
+              checked={pcSelectedIngredients.includes(i)}
+              onChange={() => {
+                setPcSelectedIngredients(
+                  pcSelectedIngredients.includes(i)
+                    ? pcSelectedIngredients.filter(x => x !== i)
+                    : [...pcSelectedIngredients, i]
+                )
+              }}
+            />
+            {" "}{i}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* Allergens / Free From (multi-checkbox) */}
+    <div style={{marginBottom: "15px"}}>
+      <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+        Allergens (Free From)
+      </label>
+      <div style={checkboxGridStyle}>
+        {pcAllergensList.map(a => (
+          <label key={a} style={{cursor: "pointer", fontSize: "14px"}}>
+            <input
+              type="checkbox"
+              checked={pcSelectedAllergens.includes(a)}
+              onChange={() => {
+                setPcSelectedAllergens(
+                  pcSelectedAllergens.includes(a)
+                    ? pcSelectedAllergens.filter(x => x !== a)
+                    : [...pcSelectedAllergens, a]
+                )
+              }}
+            />
+            {" "}{a}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* SPF ve Product Form (yan yana) */}
+    <div style={{display: "flex", gap: "10px", marginBottom: "15px"}}>
+      <div style={{flex: 1}}>
+        <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+          SPF (Sun Care için)
+        </label>
+        <input
+          type="text"
+          list="pc-spf-list"
+          placeholder="Örn: SPF 30, SPF 50+"
+          value={pcSpf}
+          onChange={(e) => setPcSpf(e.target.value)}
+          style={inputStyle}
+        />
+        <datalist id="pc-spf-list">
+          {pcSpfList.map(s => <option key={s} value={s} />)}
+        </datalist>
+      </div>
+      <div style={{flex: 1}}>
+        <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+          Product Form
+        </label>
+        <select
+          value={pcProductForm}
+          onChange={(e) => setPcProductForm(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="">Seçiniz...</option>
+          {pcProductFormsList.map(pf => <option key={pf} value={pf}>{pf}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {/* Volume (ml) ve Yerli üretim */}
+    <div style={{display: "flex", gap: "10px", marginBottom: "15px", alignItems: "center"}}>
+      <div style={{flex: 1}}>
+        <label style={{display: "block", marginBottom: "6px", fontWeight: "600"}}>
+          Volume (ml)
+        </label>
+        <input
+          type="number"
+          placeholder="Örn: 100, 200, 500"
+          value={pcVolumeMl}
+          onChange={(e) => setPcVolumeMl(e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+      <div style={{flex: 1, paddingTop: "20px"}}>
+        <label style={{cursor: "pointer", fontSize: "14px"}}>
+          <input
+            type="checkbox"
+            checked={isLocallyProduced}
+            onChange={(e) => setIsLocallyProduced(e.target.checked)}
+          />
+          {" "}Yerli üretim
+        </label>
+      </div>
     </div>
 
     {/* Fiyat ve Stok */}

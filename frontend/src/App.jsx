@@ -10,6 +10,7 @@ import AddProduct from "./AddProduct"
 import CustomerLogin from "./CustomerLogin"
 import CustomerRegister from "./CustomerRegister"
 import Landing from "./Landing"
+import PersonalCare from "./PersonalCare"
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/snacks" element={<Snacks />} />
         <Route path="/drinks" element={<Beverages />} />
+        <Route path="/personal-care" element={<PersonalCare />} /> 
         <Route path="/supplier/login" element={<SupplierLogin />} />
         <Route path="/supplier/register" element={<SupplierRegister />} />
         <Route path="/supplier/dashboard" element={<SupplierDashboard />} />

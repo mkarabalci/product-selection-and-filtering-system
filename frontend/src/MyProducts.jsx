@@ -11,6 +11,9 @@ function MyProducts() {
 
   const [searchQuery, setSearchQuery] = useState("")
 
+  const [selectedBranch, setSelectedBranch] = useState("")
+
+
   // Düzenleme state'leri
   const [editingId, setEditingId] = useState(null)
   const [editPrice, setEditPrice] = useState("")
@@ -53,11 +56,11 @@ function MyProducts() {
     const priceNum = parseFloat(editPrice)
     const stockNum = parseInt(editStock)
     if (isNaN(priceNum) || priceNum < 0) {
-      setErrorMessage("Geçerli bir fiyat girin")
+      setErrorMessage("Please enter a valid price")
       return
     }
     if (isNaN(stockNum) || stockNum < 0) {
-      setErrorMessage("Geçerli bir stok değeri girin")
+      setErrorMessage("Please enter a valid stock value")
       return
     }
 
@@ -72,19 +75,19 @@ function MyProducts() {
       )
       if (!response.ok) {
         const err = await response.json()
-        setErrorMessage(err.detail || "Güncelleme başarısız")
+        setErrorMessage(err.detail || "Update failed")
         return
       }
       handleCancel()
       fetchProducts()
     } catch (err) {
-      setErrorMessage("Sunucuya bağlanılamadı")
+      setErrorMessage("Could not connect to server")
     }
   }
 
   const handleDelete = async (branchProductId, productName, branchName) => {
     const confirmed = window.confirm(
-      `"${productName}" ürününü "${branchName}" şubesinden silmek istediğinize emin misiniz?`
+      `Are you sure you want to delete "${productName}" from "${branchName}"?`
     )
     if (!confirmed) return
 
@@ -95,12 +98,12 @@ function MyProducts() {
       )
       if (!response.ok) {
         const err = await response.json()
-        setErrorMessage(err.detail || "Silme başarısız")
+        setErrorMessage(err.detail || "Delete failed")
         return
       }
       fetchProducts()
     } catch (err) {
-      setErrorMessage("Sunucuya bağlanılamadı")
+      setErrorMessage("Could not connect to server")
     }
   }
 
@@ -109,15 +112,25 @@ function MyProducts() {
     window.open(url, "_blank")
   }
 
-  // Arama filtresi 
-  const filteredProducts = products.filter(p => {
-    const q = searchQuery.toLowerCase().trim()
-    if (!q) return true
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
-    )
-  })
+
+  const branchOptions = [...new Set(products.map(p => p.branch))].sort()
+
+  
+  const filteredProducts = products
+    // 1) Branch filter
+    .filter(p => {
+      if (!selectedBranch) return true  
+      return p.branch === selectedBranch
+    })
+    // 2) Search filter (product name OR category)
+    .filter(p => {
+      const q = searchQuery.toLowerCase().trim()
+      if (!q) return true
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      )
+    })
 
   return (
     <div className="home-page">
@@ -152,7 +165,7 @@ function MyProducts() {
           <span style={{fontSize: "20px", marginRight: "10px"}}>🔍</span>
           <input
             type="text"
-            placeholder="Aramak istediğiniz ürünü girin (isim veya kategori)"
+            placeholder="Search by product name or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -187,7 +200,29 @@ function MyProducts() {
                 <th>Name</th>
                 <th>Price</th>
                 <th>Stock Quantity</th>
-                <th>Market</th>
+                <th>
+                  <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                    <span>Branch</span>
+                    <select
+                      value={selectedBranch}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        fontSize: "13px",
+                        backgroundColor: "white",
+                        cursor: "pointer",
+                        fontWeight: "normal"
+                      }}
+                    >
+                      <option value="">All Branches</option>
+                      {branchOptions.map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                </th>
                 <th>Location</th>
                 <th>Actions</th>
               </tr>
@@ -196,7 +231,11 @@ function MyProducts() {
               {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan="6" style={{textAlign: "center", padding: "30px", color: "#999"}}>
-                    {searchQuery ? "Aramanızla eşleşen ürün bulunamadı." : "Henüz ürün eklenmemiş."}
+                    {searchQuery 
+                    ? "No products match your search."
+                      : selectedBranch
+                      ? `No products in "${selectedBranch}".`
+                      : "No products added yet."}
                   </td>
                 </tr>
               )}
@@ -238,13 +277,13 @@ function MyProducts() {
                     </td>
 
                     {/* Market */}
-                    <td>{p.branch}</td>
+                     <td>{selectedBranch ? "" : p.branch}</td>
 
                     {/* Location — Google Maps */}
                     <td>
                       <span
                         onClick={() => openInMaps(p.branch_address || p.branch)}
-                        title={`${p.branch_address || p.branch} — Haritada aç`}
+                        title={`${p.branch_address || p.branch} — Open in Maps`}
                         style={{
                           cursor: "pointer",
                           fontSize: "20px"
@@ -270,7 +309,7 @@ function MyProducts() {
                               cursor: "pointer"
                             }}
                           >
-                            Kaydet
+                            Save
                           </button>
                           <button
                             onClick={handleCancel}
@@ -283,7 +322,7 @@ function MyProducts() {
                               cursor: "pointer"
                             }}
                           >
-                            İptal
+                            Cancel
                           </button>
                         </>
                       ) : (
@@ -301,7 +340,7 @@ function MyProducts() {
                               cursor: isAnotherRowEditing ? "not-allowed" : "pointer"
                             }}
                           >
-                            Düzenle
+                            Edit
                           </button>
                           <button
                             onClick={() => handleDelete(p.id, p.name, p.branch)}
@@ -315,7 +354,7 @@ function MyProducts() {
                               cursor: isAnotherRowEditing ? "not-allowed" : "pointer"
                             }}
                           >
-                            Sil
+                            Delete
                           </button>
                         </>
                       )}

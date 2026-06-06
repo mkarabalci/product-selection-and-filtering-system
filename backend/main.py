@@ -1076,3 +1076,463 @@ def get_package_types():
         cursor.close()
         conn.close()
     return [row[0] for row in rows]
+
+
+
+# PERSONAL CARE ENDPOINTLERİ 
+
+@app.get("/personal-care")
+def get_personal_care():
+    # Stokta olan tüm Personal Care ürünlerini şube, fiyat ve detaylarıyla getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                p.id, p.name, b.name AS brand, bp.price, bp.stock_quantity,
+                br.name AS branch, pcd.cosmetics_type, pcd.product_subtype,
+                pcd.skin_type, pcd.targets, pcd.active_ingredients,
+                pcd.allergens, pcd.spf, pcd.product_form, pcd.volume_ml,
+                p.image_url
+            FROM products p
+            JOIN brands b ON p.brand_id = b.id
+            JOIN branch_products bp ON p.id = bp.product_id
+            JOIN branches br ON bp.branch_id = br.id
+            JOIN personal_care_details pcd ON p.id = pcd.product_id
+            WHERE bp.stock_quantity > 0
+            ORDER BY p.name
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return JSONResponse(content=[{
+        "id": row[0], "name": row[1], "brand": row[2],
+        "price": float(row[3]), "stock": row[4], "branch": row[5],
+        "cosmetics_type": row[6], "product_subtype": row[7],
+        "skin_type": row[8], "targets": row[9], "active_ingredients": row[10],
+        "allergens": row[11], "spf": row[12], "product_form": row[13],
+        "volume_ml": row[14], "image_url": row[15]
+    } for row in rows], media_type="application/json; charset=utf-8")
+
+
+@app.get("/personal-care/filter")
+def filter_personal_care(
+    # Üst kategori ve alt tür
+    cosmetics_type: Optional[List[str]] = Query(default=None),
+    product_subtype: Optional[List[str]] = Query(default=None),
+    # Cilt tipi
+    skin_type: Optional[List[str]] = Query(default=None),
+    # Hedefler (çoklu) — ürün BU hedeflerden BİRİNİ İÇERİYORSA gelir
+    targets: Optional[List[str]] = Query(default=None),
+    # Aktif içerikler (çoklu)
+    active_ingredients: Optional[List[str]] = Query(default=None),
+    # Allerjen-free (içermediği şeyler) — ürün BU allerjenleri "free" listesinde içeriyorsa gelir
+    allergens: Optional[List[str]] = Query(default=None),
+    # SPF
+    spf: Optional[List[str]] = Query(default=None),
+    # Product form
+    product_form: Optional[List[str]] = Query(default=None),
+    # Marka ve tedarikçi
+    brand: Optional[List[str]] = Query(default=None),
+    supplier: Optional[List[str]] = Query(default=None),
+    # Fiyat aralığı
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None
+):
+    # Kullanıcının seçtiği filtrelere göre dinamik SQL sorgusu oluşturur
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT
+            p.id, p.name, b.name AS brand, bp.price, bp.stock_quantity,
+            br.name AS branch, s.company_name AS supplier,
+            pcd.cosmetics_type, pcd.product_subtype,
+            pcd.skin_type, pcd.targets, pcd.active_ingredients,
+            pcd.allergens, pcd.spf, pcd.product_form, pcd.volume_ml,
+            p.image_url
+        FROM products p
+        JOIN brands b ON p.brand_id = b.id
+        JOIN branch_products bp ON p.id = bp.product_id
+        JOIN branches br ON bp.branch_id = br.id
+        JOIN suppliers s ON br.supplier_id = s.id
+        JOIN personal_care_details pcd ON p.id = pcd.product_id
+        WHERE bp.stock_quantity > 0
+    """
+    params = []
+
+    # Cosmetics Type (üst kategori) — kullanıcı birden fazla seçebilir
+    if cosmetics_type:
+        placeholders = ",".join(["%s"] * len(cosmetics_type))
+        query += f" AND pcd.cosmetics_type IN ({placeholders})"
+        params.extend(cosmetics_type)
+
+    # Product Subtype (alt tür)
+    if product_subtype:
+        placeholders = ",".join(["%s"] * len(product_subtype))
+        query += f" AND pcd.product_subtype IN ({placeholders})"
+        params.extend(product_subtype)
+
+    # Skin Type (çoklu) — seçilen cilt tiplerinden HERHANGİ BİRİNİ içeren ürünler
+    if skin_type:
+        # ARRAY overlap (&&) operatörü: iki array kesişiyorsa true
+        skin_array_str = "ARRAY[" + ",".join(["%s"] * len(skin_type)) + "]"
+        query += f" AND pcd.skin_type && {skin_array_str}::TEXT[]"
+        params.extend(skin_type)
+
+    # Targets (çoklu) — herhangi birini içeren ürünler
+    if targets:
+        targets_array_str = "ARRAY[" + ",".join(["%s"] * len(targets)) + "]"
+        query += f" AND pcd.targets && {targets_array_str}::TEXT[]"
+        params.extend(targets)
+
+    # Active Ingredients (çoklu) — herhangi birini içeren ürünler
+    if active_ingredients:
+        ing_array_str = "ARRAY[" + ",".join(["%s"] * len(active_ingredients)) + "]"
+        query += f" AND pcd.active_ingredients && {ing_array_str}::TEXT[]"
+        params.extend(active_ingredients)
+
+    # Allergens Free-From — seçilen "X-Free" özelliklerini İÇEREN ürünler
+    # Not: bu tabloda allergens kolonu "içermediği şeyler" listesi
+    # Yani Paraben-Free filtresi → allergens array'inde 'Paraben-Free' geçen ürünler
+    if allergens:
+        for a in allergens:
+            query += " AND %s = ANY(pcd.allergens)"
+            params.append(a)
+
+    # SPF (çoklu seçim)
+    if spf:
+        placeholders = ",".join(["%s"] * len(spf))
+        query += f" AND pcd.spf IN ({placeholders})"
+        params.extend(spf)
+
+    # Product Form (çoklu seçim)
+    if product_form:
+        placeholders = ",".join(["%s"] * len(product_form))
+        query += f" AND pcd.product_form IN ({placeholders})"
+        params.extend(product_form)
+
+    # Marka
+    if brand:
+        placeholders = ",".join(["%s"] * len(brand))
+        query += f" AND b.name IN ({placeholders})"
+        params.extend(brand)
+
+    # Tedarikçi
+    if supplier:
+        placeholders = ",".join(["%s"] * len(supplier))
+        query += f" AND s.company_name IN ({placeholders})"
+        params.extend(supplier)
+
+    # Fiyat aralığı
+    if min_price is not None:
+        query += " AND bp.price >= %s"
+        params.append(min_price)
+    if max_price is not None:
+        query += " AND bp.price <= %s"
+        params.append(max_price)
+
+    query += " ORDER BY p.name"
+
+    try:
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return JSONResponse(content=[{
+        "id": row[0], "name": row[1], "brand": row[2],
+        "price": float(row[3]), "stock": row[4], "branch": row[5],
+        "supplier": row[6], "cosmetics_type": row[7], "product_subtype": row[8],
+        "skin_type": row[9], "targets": row[10], "active_ingredients": row[11],
+        "allergens": row[12], "spf": row[13], "product_form": row[14],
+        "volume_ml": row[15], "image_url": row[16]
+    } for row in rows], media_type="application/json; charset=utf-8")
+
+
+# Personal Care Filtre Seçenekleri 
+# Bu endpointler frontend'in filtre kartlarını veritabanından doldurması için
+
+@app.get("/personal-care-types")
+def get_personal_care_types():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT cosmetics_type 
+            FROM personal_care_details 
+            WHERE cosmetics_type IS NOT NULL 
+            ORDER BY cosmetics_type
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-subtypes")
+def get_personal_care_subtypes(
+    cosmetics_type: Optional[List[str]] = Query(default=None)
+):
+    # Subtype listesi — opsiyonel olarak cosmetics_type'a göre filtrelenir
+    # Bu, dinamik filtreleme için: kullanıcı "Skin Care" seçince sadece ona ait alt türler gelsin diye
+    # "Face Cream, Hand Cream" gibi Skin Care'e ait subtype'lar gelir
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT DISTINCT product_subtype, cosmetics_type
+        FROM personal_care_details
+        WHERE product_subtype IS NOT NULL
+    """
+    params = []
+
+    if cosmetics_type:
+        placeholders = ",".join(["%s"] * len(cosmetics_type))
+        query += f" AND cosmetics_type IN ({placeholders})"
+        params.extend(cosmetics_type)
+
+    query += " ORDER BY product_subtype"
+
+    try:
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Hem subtype hem ait olduğu üst kategoriyi döndürüyoruz
+    # Frontend isterse cosmetics_type bilgisini de kullanabilir
+    return [{"subtype": row[0], "cosmetics_type": row[1]} for row in rows]
+
+
+@app.get("/personal-care-skin-types")
+def get_personal_care_skin_types():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT unnest(skin_type) 
+            FROM personal_care_details 
+            WHERE skin_type IS NOT NULL 
+            ORDER BY 1
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-targets")
+def get_personal_care_targets():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT unnest(targets) 
+            FROM personal_care_details 
+            WHERE targets IS NOT NULL 
+            ORDER BY 1
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-ingredients")
+def get_personal_care_ingredients():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT unnest(active_ingredients) 
+            FROM personal_care_details 
+            WHERE active_ingredients IS NOT NULL 
+            ORDER BY 1
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-allergens")
+def get_personal_care_allergens():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT unnest(allergens) 
+            FROM personal_care_details 
+            WHERE allergens IS NOT NULL 
+            ORDER BY 1
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-spf")
+def get_personal_care_spf():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT spf 
+            FROM personal_care_details 
+            WHERE spf IS NOT NULL 
+            ORDER BY spf
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-product-forms")
+def get_personal_care_product_forms():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT product_form 
+            FROM personal_care_details 
+            WHERE product_form IS NOT NULL 
+            ORDER BY product_form
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/personal-care-brands")
+def get_personal_care_brands():
+    # Sadece Personal Care kategorisinde kullanılan markaları getirir
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT b.name 
+            FROM brands b
+            JOIN products p ON p.brand_id = b.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE c.name = 'Personal Care'
+            ORDER BY b.name
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+# Yeni Personal Care Ürünü Tanıtma
+
+@app.post("/supplier/{supplier_id}/branches/{branch_id}/personal-care")
+def add_new_personal_care_product(
+    supplier_id: int,
+    branch_id: int,
+    payload: dict = Body(...)
+):
+    # Gerekli alanları al
+    name = payload.get("name", "").strip()
+    brand_id = payload.get("brand_id")
+    image_url = payload.get("image_url")
+    cosmetics_type = payload.get("cosmetics_type")
+    product_subtype = payload.get("product_subtype")
+    skin_type = payload.get("skin_type", [])              
+    targets = payload.get("targets", [])                  
+    active_ingredients = payload.get("active_ingredients", [])  
+    allergens = payload.get("allergens", [])              
+    spf = payload.get("spf")
+    product_form = payload.get("product_form")
+    volume_ml = payload.get("volume_ml")
+    is_locally_produced = payload.get("is_locally_produced", False)
+    price = payload.get("price")
+    stock_quantity = payload.get("stock_quantity")
+
+    # Temel doğrulama
+    if not name or not brand_id or price is None or stock_quantity is None:
+        raise HTTPException(status_code=400, detail="Eksik zorunlu alan")
+    if not cosmetics_type or not product_subtype:
+        raise HTTPException(status_code=400, detail="Cosmetics Type ve Product Subtype zorunlu")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1. Güvenlik
+        cursor.execute(
+            "SELECT supplier_id FROM branches WHERE id = %s",
+            (branch_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Şube bulunamadı")
+        if row[0] != supplier_id:
+            raise HTTPException(status_code=403, detail="Bu şube size ait değil")
+
+        # 2. products tablosuna INSERT 
+        cursor.execute(
+            """
+            INSERT INTO products (name, category_id, brand_id, image_url)
+            VALUES (%s, 3, %s, %s)
+            RETURNING id
+            """,
+            (name, brand_id, image_url)
+        )
+        product_id = cursor.fetchone()[0]
+
+        # 3. personal_care_details tablosuna INSERT
+        cursor.execute(
+            """
+            INSERT INTO personal_care_details
+                (product_id, cosmetics_type, product_subtype, skin_type,
+                 targets, active_ingredients, allergens, spf, product_form,
+                 volume_ml, is_locally_produced)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (product_id, cosmetics_type, product_subtype, skin_type,
+             targets, active_ingredients, allergens, spf, product_form,
+             volume_ml, is_locally_produced)
+        )
+
+        # 4. branch_products tablosuna INSERT
+        cursor.execute(
+            """
+            INSERT INTO branch_products (branch_id, product_id, price, stock_quantity)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (branch_id, product_id, price, stock_quantity)
+        )
+
+        # Hepsi başarılıysa transaction'ı onayla
+        conn.commit()
+
+        return {
+            "success": True,
+            "product_id": product_id,
+            "message": f"'{name}' başarıyla eklendi"
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()

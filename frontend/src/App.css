@@ -143,6 +143,12 @@ body {
   color: #888;
 }
 
+.product-stock {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
 .filter-section {
   width: 100%;
   margin-bottom: 32px;

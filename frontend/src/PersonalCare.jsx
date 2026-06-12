@@ -350,6 +350,7 @@ function PersonalCare() {
                 )}
                 <div className="product-name">{p.name}</div>
                 <div className="product-brand">{p.brand}</div>
+                <div className="product-stock">Stock: {p.stock}</div>
                 <div className="product-details">
                   <span>{p.cosmetics_type} → {p.product_subtype}</span>
                   {p.spf && <span>SPF: {p.spf}</span>}

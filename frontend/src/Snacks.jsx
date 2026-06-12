@@ -251,6 +251,7 @@ useEffect(() => {
 )}
               <div className="product-name">{p.name}</div>
               <div className="product-brand">{p.brand}</div>
+              <div className="product-stock">Stock: {p.stock}</div>
               <div className="product-details">
                 <span>{p.energy_kcal} kcal</span>
                 <span>Protein: {p.protein_g}g</span>

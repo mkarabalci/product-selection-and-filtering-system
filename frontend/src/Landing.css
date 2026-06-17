@@ -65,29 +65,11 @@
 }
 
 .landing-hero p {
-  font-style: italic;
   font-size: 16px;
   color: #c0d4f0;
   margin-bottom: 24px;
-}
-
-/* Arama kutusu */
-.landing-search {
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 32px;
-  padding: 12px 24px;
-  max-width: 600px;
-  gap: 12px;
-}
-
-.landing-search input {
-  border: none;
-  outline: none;
-  font-size: 15px;
-  flex: 1;
-  color: #333;
+  max-width: 950px;
+  line-height: 1.6;
 }
 
 /* Kategori bölümü */

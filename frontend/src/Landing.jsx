@@ -28,12 +28,13 @@ useEffect(() => {
 
       {/* Hero alanı */}
       <div className="landing-hero">
-        <h2>Find the right products faster</h2>
-        <p>Search by product, category or supplier — get quick access to the items that best fit your needs.</p>
-        <div className="landing-search">
-          <input type="text" placeholder="Search products, categories or suppliers" />
-          <span>🔍</span>
-        </div>
+        <h2>Choose the right products with confidence</h2>
+        <p>
+          Selectra is a product selection and filtering platform that brings supermarket products together in one place. 
+          Browse categories such as snacks, drinks and personal care, then filter by brand, price and detailed attributes to quickly
+          find what fits you best — and compare the same product across different branches and suppliers, all in a single view.
+        </p>
+        
       </div>
 
       {/* Kategori kartları */}

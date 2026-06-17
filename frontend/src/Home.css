@@ -74,3 +74,32 @@
 .sidebar nav a:hover {
   opacity: 0.7;
 }
+
+.favorites-card {
+  margin-top: 40px;
+  max-width: 360px;          /* yatayda kısalttık */
+  display: flex;
+  flex-direction: column;    /* yazı üstte, kalp altta */
+  align-items: center;
+  gap: 16px;
+  background-color: #fff5f5;
+  border: 2px solid #e53935;
+  border-radius: 16px;
+  padding: 48px 32px;        /* uzunluğu (yüksekliği) artırdık */
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.favorites-card:hover {
+  background-color: #e53935;
+}
+.favorites-card:hover .fav-title {
+  color: white;
+}
+.fav-title {
+  font-weight: 700;
+  font-size: 22px;
+  color: #e53935;
+}
+.fav-heart {
+  font-size: 64px;           /* büyük kalp */
+}

@@ -41,6 +41,10 @@ useEffect(() => {
   </div>
 
 </div>
+      <div className="favorites-card" onClick={() => navigate("/favorites")}>
+  <p className="fav-title">My Favorites</p>
+  <span className="fav-heart">❤️</span>
+</div>
     </main>
 
   </div>

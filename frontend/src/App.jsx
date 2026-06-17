@@ -15,6 +15,7 @@ import PreviewSnacks from "./PreviewSnacks"
 import PreviewBeverages from "./PreviewBeverages"
 import PreviewPersonalCare from "./PreviewPersonalCare"
 import PersonalCare from "./PersonalCare"
+import Favorites from "./Favorites"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
         <Route path="/snacks" element={<Snacks />} />
+        <Route path="/favorites" element={<Favorites />} />
         <Route path="/preview/snacks" element={<PreviewSnacks />} />
         <Route path="/preview/drinks" element={<PreviewBeverages />} />
         <Route path="/preview/personal-care" element={<PreviewPersonalCare />} />

@@ -7,14 +7,14 @@ const API = "http://127.0.0.1:8000"
 
 function PersonalCare() {
 
-  // ─── State Tanımları ─────────────────────────────────────────────────────
+  //  State Tanımları
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState([])
   const [showResults, setShowResults] = useState(false)
 
-  // Filtre seçenekleri (backend'den çekiliyor)
+  // Filtre seçenekleri 
   const [cosmeticsTypes, setCosmeticsTypes] = useState([])
-  const [allSubtypes, setAllSubtypes] = useState([])          // Tüm subtype-cosmetics_type eşleşmeleri
+  const [allSubtypes, setAllSubtypes] = useState([])          
   const [skinTypes, setSkinTypes] = useState([])
   const [targets, setTargets] = useState([])
   const [ingredients, setIngredients] = useState([])
@@ -23,6 +23,9 @@ function PersonalCare() {
   const [productForms, setProductForms] = useState([])
   const [brands, setBrands] = useState([])
   const [suppliers, setSuppliers] = useState([])
+
+  const customer = JSON.parse(localStorage.getItem("customer"))
+  const [favoriteIds, setFavoriteIds] = useState([])
 
   // Kullanıcının seçtiği filtreler
   const [filters, setFilters] = useState({
@@ -59,7 +62,14 @@ function PersonalCare() {
     fetch(`${API}/suppliers`).then(r => r.json()).then(setSuppliers)
   }, [])
 
-  // ─── DİNAMİK SUBTYPE LİSTESİ ─────────────────────────────────────────────
+  useEffect(() => {
+  if (!customer?.customer_id) return
+  fetch(`${API}/customer/${customer.customer_id}/favorites/ids`)
+    .then(r => r.json())
+    .then(setFavoriteIds)
+  }, [])
+
+  // DİNAMİK SUBTYPE LİSTESİ
   // Eğer kullanıcı cosmetics_type seçmemişse → tüm subtype'ları göster
   // Seçtiyse → sadece o üst kategorinin subtype'larını göster
   // Ayrıca: KULLANICININ SEÇTİĞİ subtype'lar en üste alınır (sıralama)
@@ -165,7 +175,27 @@ function PersonalCare() {
     setProducts([])
   }
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  const toggleFavorite = async (branchProductId) => {
+  if (!customer?.customer_id) {
+    alert("You must be logged in to add favorites.")
+    return
+  }
+  const isFav = favoriteIds.includes(branchProductId)
+  if (isFav) {
+    await fetch(`${API}/customer/${customer.customer_id}/favorites/${branchProductId}`, {
+      method: "DELETE"
+    })
+    setFavoriteIds(favoriteIds.filter(id => id !== branchProductId))
+  } else {
+    await fetch(`${API}/customer/${customer.customer_id}/favorites`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ branch_product_id: branchProductId })
+    })
+    setFavoriteIds([...favoriteIds, branchProductId])
+  }
+}
+
   return (
     <div className="home-page">
       <Sidebar />
@@ -345,6 +375,13 @@ function PersonalCare() {
             {!loading && products.length === 0 && <p className="info-text">No products found.</p>}
             {!loading && products.map((p, i) => (
               <div key={i} className="product-card">
+                <button
+                className={`fav-btn ${favoriteIds.includes(p.branch_product_id) ? "fav-active" : ""}`}
+                onClick={() => toggleFavorite(p.branch_product_id)}
+                title="Add/Remove from Favorites"
+              >
+                {favoriteIds.includes(p.branch_product_id) ? "♥" : "♡"}
+              </button>
                 {p.image_url && (
                   <img src={p.image_url} alt={p.name} className="product-image" />
                 )}

@@ -15,6 +15,8 @@ function Beverages() {
   const [allergens, setAllergens] = useState([])
   const [packageTypes, setPackageTypes] = useState([])
   const [showResults, setShowResults] = useState(false)
+  const customer = JSON.parse(localStorage.getItem("customer"))
+  const [favoriteIds, setFavoriteIds] = useState([])
   const [filters, setFilters] = useState({
     beverage_type: [],
     brand: [],
@@ -38,6 +40,14 @@ function Beverages() {
     fetch(`${API}/beverage-brands`).then(r => r.json()).then(setBrands)
     fetch(`${API}/suppliers`).then(r => r.json()).then(setSuppliers)
   }, [])
+
+  useEffect(() => {
+  if (!customer?.customer_id) return
+  fetch(`${API}/customer/${customer.customer_id}/favorites/ids`)
+    .then(r => r.json())
+    .then(setFavoriteIds)
+  }, [])
+
 
   // Ürünleri filtreli çek
   const fetchProducts = async () => {
@@ -100,6 +110,28 @@ function Beverages() {
 useEffect(() => {
   document.title = "Selectra - Beverages"
 }, [])
+
+
+const toggleFavorite = async (branchProductId) => {
+  if (!customer?.customer_id) {
+    alert("You must be logged in to add favorites.")
+    return
+  }
+  const isFav = favoriteIds.includes(branchProductId)
+  if (isFav) {
+    await fetch(`${API}/customer/${customer.customer_id}/favorites/${branchProductId}`, {
+      method: "DELETE"
+    })
+    setFavoriteIds(favoriteIds.filter(id => id !== branchProductId))
+  } else {
+    await fetch(`${API}/customer/${customer.customer_id}/favorites`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ branch_product_id: branchProductId })
+    })
+    setFavoriteIds([...favoriteIds, branchProductId])
+  }
+}
 
   return (
     <div className="home-page">
@@ -231,6 +263,13 @@ useEffect(() => {
             {!loading && products.length === 0 && <p className="info-text">No products found.</p>}
             {!loading && products.map((p, i) => (
               <div key={i} className="product-card">
+                <button
+                className={`fav-btn ${favoriteIds.includes(p.branch_product_id) ? "fav-active" : ""}`}
+                onClick={() => toggleFavorite(p.branch_product_id)}
+                title="Add/Remove from Favorites"
+              >
+                {favoriteIds.includes(p.branch_product_id) ? "♥" : "♡"}
+              </button>
                 {p.image_url && (
                   <img src={p.image_url} alt={p.name} className="product-image" />
                 )}

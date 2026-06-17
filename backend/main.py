@@ -93,7 +93,7 @@ def filter_snacks(
             p.id, p.name, b.name AS brand, bp.price, bp.stock_quantity,
             br.name AS branch, s.company_name AS supplier,
             sd.snacks_type, sd.energy_kcal, sd.protein_g, sd.sugar_g,
-            sd.oil_type, sd.packaging, sd.allergens, p.image_url
+            sd.oil_type, sd.packaging, sd.allergens, p.image_url, bp.id
         FROM products p
         JOIN brands b ON p.brand_id = b.id
         JOIN branch_products bp ON p.id = bp.product_id
@@ -170,7 +170,7 @@ def filter_snacks(
         "supplier": row[6], "type": row[7], "energy_kcal": row[8],
         "protein_g": float(row[9]), "sugar_g": float(row[10]),
         "oil_type": row[11], "packaging": row[12], "allergens": row[13], 
-        "image_url": row[14]
+        "image_url": row[14], "branch_product_id": row[15]
     } for row in rows], media_type="application/json; charset=utf-8")
 
 
@@ -308,7 +308,7 @@ def filter_beverages(
             p.id, p.name, b.name AS brand, bp.price, bp.stock_quantity,
             br.name AS branch, s.company_name AS supplier,
             bd.beverage_type, bd.energy_kcal, bd.sugar_g, bd.volume,
-            bd.pH, bd.package_type, bd.allergens, p.image_url
+            bd.pH, bd.package_type, bd.allergens, p.image_url, bp.id
         FROM products p
         JOIN brands b ON p.brand_id = b.id
         JOIN branch_products bp ON p.id = bp.product_id
@@ -379,7 +379,7 @@ def filter_beverages(
         "supplier": row[6], "type": row[7], "energy_kcal": row[8],
         "sugar_g": float(row[9]), "volume": float(row[10]),
         "ph": float(row[11]), "package_type": row[12],
-        "allergens": row[13], "image_url": row[14]
+        "allergens": row[13], "image_url": row[14], "branch_product_id": row[15]
     } for row in rows], media_type="application/json; charset=utf-8")
 
 
@@ -1152,7 +1152,7 @@ def filter_personal_care(
             pcd.cosmetics_type, pcd.product_subtype,
             pcd.skin_type, pcd.targets, pcd.active_ingredients,
             pcd.allergens, pcd.spf, pcd.product_form, pcd.volume_ml,
-            p.image_url
+            p.image_url, bp.id
         FROM products p
         JOIN brands b ON p.brand_id = b.id
         JOIN branch_products bp ON p.id = bp.product_id
@@ -1249,7 +1249,7 @@ def filter_personal_care(
         "supplier": row[6], "cosmetics_type": row[7], "product_subtype": row[8],
         "skin_type": row[9], "targets": row[10], "active_ingredients": row[11],
         "allergens": row[12], "spf": row[13], "product_form": row[14],
-        "volume_ml": row[15], "image_url": row[16]
+        "volume_ml": row[15], "image_url": row[16], "branch_product_id": row[17]
     } for row in rows], media_type="application/json; charset=utf-8")
 
 
@@ -1652,3 +1652,127 @@ def get_branch_details(supplier_id: int, branch_id: int):
         "stats": stats,
         "products": products
     }
+
+
+# Favoriye ekle
+@app.post("/customer/{customer_id}/favorites")
+def add_favorite(customer_id: int, payload: dict = Body(...)):
+    branch_product_id = payload.get("branch_product_id")
+    if not branch_product_id:
+        raise HTTPException(status_code=400, detail="branch_product_id is required")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO favorites (customer_id, branch_product_id)
+            VALUES (%s, %s)
+            ON CONFLICT (customer_id, branch_product_id) DO NOTHING
+            """,
+            (customer_id, branch_product_id)
+        )
+        conn.commit()
+        return {"success": True, "message": "Added to favorites"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Favoriden çıkar
+@app.delete("/customer/{customer_id}/favorites/{branch_product_id}")
+def remove_favorite(customer_id: int, branch_product_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM favorites WHERE customer_id = %s AND branch_product_id = %s",
+            (customer_id, branch_product_id)
+        )
+        conn.commit()
+        return {"success": True, "message": "Removed from favorites"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Favori branch_product id'leri (kalp dolu/boş için)
+@app.get("/customer/{customer_id}/favorites/ids")
+def get_favorite_ids(customer_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT branch_product_id FROM favorites WHERE customer_id = %s",
+            (customer_id,)
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return [row[0] for row in rows]
+
+
+# Müşterinin favori ürünlerini kart bilgileriyle listele
+@app.get("/customer/{customer_id}/favorites")
+def get_favorites(customer_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT
+                bp.id  AS branch_product_id,
+                p.id   AS product_id,
+                p.name, b.name AS brand, c.name AS category,
+                p.image_url, bp.price, bp.stock_quantity, br.name AS branch,
+                COALESCE(sd.energy_kcal, bd.energy_kcal) AS energy_kcal,
+                sd.protein_g,
+                COALESCE(sd.sugar_g, bd.sugar_g) AS sugar_g,
+                bd.volume, bd.pH,
+                pcd.cosmetics_type, pcd.product_subtype, pcd.spf, pcd.volume_ml
+            FROM favorites f
+            JOIN branch_products bp ON f.branch_product_id = bp.id
+            JOIN products p         ON bp.product_id = p.id
+            JOIN brands b           ON p.brand_id = b.id
+            JOIN categories c       ON p.category_id = c.id
+            JOIN branches br        ON bp.branch_id = br.id
+            LEFT JOIN snack_details sd          ON p.id = sd.product_id
+            LEFT JOIN beverages_details bd      ON p.id = bd.product_id
+            LEFT JOIN personal_care_details pcd ON p.id = pcd.product_id
+            WHERE f.customer_id = %s
+            ORDER BY f.created_at DESC
+            """,
+            (customer_id,)
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return [{
+        "branch_product_id": row[0],
+        "product_id": row[1],
+        "name": row[2],
+        "brand": row[3],
+        "category": row[4],
+        "image_url": row[5],
+        "price": float(row[6]),
+        "stock": row[7],
+        "branch": row[8],
+        "energy_kcal": row[9],
+        "protein_g": float(row[10]) if row[10] is not None else None,
+        "sugar_g": float(row[11]) if row[11] is not None else None,
+        "volume": float(row[12]) if row[12] is not None else None,
+        "ph": float(row[13]) if row[13] is not None else None,
+        "cosmetics_type": row[14],
+        "product_subtype": row[15],
+        "spf": row[16],
+        "volume_ml": row[17]
+    } for row in rows]

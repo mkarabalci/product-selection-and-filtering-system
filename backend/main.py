@@ -1776,3 +1776,162 @@ def get_favorites(customer_id: int):
         "spf": row[16],
         "volume_ml": row[17]
     } for row in rows]
+
+
+# TEDARİKÇİ DESTEK 
+
+# Destek mesajı gönder (form buraya POST eder)
+@app.post("/supplier/{supplier_id}/support")
+def create_support_message(supplier_id: int, payload: dict = Body(...)):
+    subject = payload.get("subject")
+    message = payload.get("message")
+    category = payload.get("category")  
+
+    if not subject or not message:
+        raise HTTPException(status_code=400, detail="subject and message are required")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO support_messages (supplier_id, subject, category, message)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (supplier_id, subject, category, message)
+        )
+        new_id, created_at = cursor.fetchone()
+        conn.commit()
+        return {"success": True, "id": new_id, "created_at": str(created_at)}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Tedarikçinin kendi gönderdiği mesajları listele
+@app.get("/supplier/{supplier_id}/support")
+def get_support_messages(supplier_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, subject, category, message, status, created_at
+            FROM support_messages
+            WHERE supplier_id = %s
+            ORDER BY created_at DESC
+            """,
+            (supplier_id,)
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return [{
+        "id": row[0], "subject": row[1], "category": row[2],
+        "message": row[3], "status": row[4], "created_at": str(row[5])
+    } for row in rows]
+
+# Tedarikçinin kendi destek mesajını sil
+@app.delete("/supplier/{supplier_id}/support/{message_id}")
+def delete_support_message(supplier_id: int, message_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM support_messages WHERE id = %s AND supplier_id = %s",
+            (message_id, supplier_id)
+        )
+        conn.commit()
+        return {"success": True}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# MÜŞTERİ DESTEK 
+
+# Müşteri destek mesajı gönder
+@app.post("/customer/{customer_id}/support")
+def create_customer_message(customer_id: int, payload: dict = Body(...)):
+    subject = payload.get("subject")
+    message = payload.get("message")
+    category = payload.get("category")  # opsiyonel
+
+    if not subject or not message:
+        raise HTTPException(status_code=400, detail="subject and message are required")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO customer_messages (customer_id, subject, category, message)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (customer_id, subject, category, message)
+        )
+        new_id, created_at = cursor.fetchone()
+        conn.commit()
+        return {"success": True, "id": new_id, "created_at": str(created_at)}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Müşterinin kendi mesajlarını listele
+@app.get("/customer/{customer_id}/support")
+def get_customer_messages(customer_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, subject, category, message, status, created_at
+            FROM customer_messages
+            WHERE customer_id = %s
+            ORDER BY created_at DESC
+            """,
+            (customer_id,)
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return [{
+        "id": row[0], "subject": row[1], "category": row[2],
+        "message": row[3], "status": row[4], "created_at": str(row[5])
+    } for row in rows]
+
+
+# Müşterinin kendi mesajını sil
+@app.delete("/customer/{customer_id}/support/{message_id}")
+def delete_customer_message(customer_id: int, message_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM customer_messages WHERE id = %s AND customer_id = %s",
+            (message_id, customer_id)
+        )
+        conn.commit()
+        return {"success": True}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()

@@ -4,21 +4,21 @@ import "./Home.css"
 function Sidebar() {
   const navigate = useNavigate()
 
+  const handleLogout = () => {
+    localStorage.removeItem("customer")
+    navigate("/customer/login")
+  }
+
   return (
     <aside className="sidebar">
-      
-      {/* Logo - tıklayınca ana sayfaya döner */}
-      <h2 onClick={() => navigate("/")} style={{cursor: "pointer"}}>
+      <h2 onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
         SELECTRA
       </h2>
 
-      {/* Navigasyon menüsü */}
       <nav>
-        <a href="#">Profile</a>
-        <a href="#">Help</a>
-        <a href="#">Logout</a>
+        <a style={{ cursor: "pointer" }} onClick={() => navigate("/customer/help")}>Help</a>
+        <a style={{ cursor: "pointer" }} onClick={handleLogout}>Logout</a>
       </nav>
-
     </aside>
   )
 }

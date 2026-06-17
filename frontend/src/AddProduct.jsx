@@ -462,12 +462,12 @@ useEffect(() => {
     <div className="home-page">
       {/* Sol sidebar */}
       <aside className="sidebar">
-        <h2>SELECTRA</h2>
+        <h2 style={{cursor: "pointer"}} onClick={() => navigate("/")}>SELECTRA</h2>
         <nav>
           <a style={{cursor: "pointer"}} onClick={() => navigate("/supplier/dashboard")}>Supplier's Dashboard</a>
           <a style={{cursor: "pointer"}} onClick={() => navigate("/supplier/products")}>My Products</a>
           <a href="#" style={{fontWeight: "bold"}}>Add New Product</a>
-          <a href="#">Live Support</a>
+          <a style={{cursor: "pointer"}} onClick={() => navigate("/supplier/support")}>Live Support</a>
           <a style={{cursor: "pointer"}} onClick={() => {
             localStorage.removeItem("supplier")
             navigate("/supplier/login")

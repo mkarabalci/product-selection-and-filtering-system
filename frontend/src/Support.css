@@ -1,0 +1,55 @@
+.support-intro { color: #666; margin: 8px 0 24px; }
+.support-heading { color: #1a3a6b; margin: 32px 0 12px; }
+
+.faq-list { display: flex; flex-direction: column; gap: 8px; max-width: 700px; }
+.faq-item { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.faq-q {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  background: white; border: none; padding: 14px 16px;
+  font-size: 15px; font-weight: 600; color: #1a3a6b; cursor: pointer; text-align: left;
+}
+.faq-q:hover { background: #f5f8ff; }
+.faq-a { padding: 0 16px 14px; color: #555; font-size: 14px; line-height: 1.5; }
+
+.support-form { display: flex; flex-direction: column; max-width: 700px; }
+.support-form label { font-size: 13px; font-weight: 600; color: #444; margin: 12px 0 4px; }
+.support-form input, .support-form select, .support-form textarea {
+  padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px;
+  font-size: 14px; font-family: inherit;
+}
+.support-submit {
+  margin-top: 16px; align-self: flex-start; padding: 12px 28px;
+  background: #1976d2; color: white; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.support-submit:disabled { opacity: 0.6; cursor: default; }
+.form-success { background: #e8f5e9; color: #2e7d32; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
+.form-error { background: #fdecea; color: #c62828; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
+
+.contact-box, .kvkk-box {
+  max-width: 700px; background: #f8faff; border: 1px solid #e0e0e0;
+  border-radius: 8px; padding: 16px 20px;
+}
+.contact-box p { margin: 6px 0; font-size: 15px; color: #333; }
+.kvkk-box p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+
+.request-list { display: flex; flex-direction: column; gap: 12px; max-width: 700px; }
+.request-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; background: white; }
+.request-top { display: flex; justify-content: space-between; align-items: center; }
+.request-subject { font-weight: 600; color: #1a3a6b; font-size: 15px; }
+.request-status {
+  font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px; text-transform: capitalize;
+}
+.status-open { background: #e3f2fd; color: #1565c0; }
+.status-in_progress { background: #fff3e0; color: #ef6c00; }
+.status-resolved { background: #e8f5e9; color: #2e7d32; }
+.request-category { font-size: 12px; color: #888; margin-top: 4px; }
+.request-message { font-size: 14px; color: #444; margin-top: 8px; line-height: 1.5; }
+.request-date { font-size: 12px; color: #aaa; margin-top: 8px; }
+
+.request-actions { display: flex; align-items: center; gap: 10px; }
+.request-delete {
+  background: none; border: none; cursor: pointer; font-size: 15px;
+  color: #c62828; padding: 2px 6px; border-radius: 6px;
+}
+.request-delete:hover { background: #fdecea; }

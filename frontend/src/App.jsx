@@ -5,6 +5,7 @@ import Beverages from "./Beverages"
 import SupplierLogin from "./SupplierLogin"
 import SupplierRegister from "./SupplierRegister"
 import SupplierDashboard from "./SupplierDashboard"
+import SupplierSupport from "./SupplierSupport"
 import BranchDetail from "./BranchDetail"
 import MyProducts from "./MyProducts"
 import AddProduct from "./AddProduct"
@@ -16,6 +17,7 @@ import PreviewBeverages from "./PreviewBeverages"
 import PreviewPersonalCare from "./PreviewPersonalCare"
 import PersonalCare from "./PersonalCare"
 import Favorites from "./Favorites"
+import CustomerHelp from "./CustomerHelp"
 
 function App() {
   return (
@@ -33,11 +35,13 @@ function App() {
         <Route path="/supplier/login" element={<SupplierLogin />} />
         <Route path="/supplier/register" element={<SupplierRegister />} />
         <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+        <Route path="/supplier/support" element={<SupplierSupport />} />
         <Route path="/supplier/branches/:branchId" element={<BranchDetail />} />
         <Route path="/supplier/products" element={<MyProducts />} />
         <Route path="/supplier/products/new" element={<AddProduct />} />
         <Route path="/customer/login" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
+        <Route path="/customer/help" element={<CustomerHelp />} />
       </Routes>
     </BrowserRouter>
   )
